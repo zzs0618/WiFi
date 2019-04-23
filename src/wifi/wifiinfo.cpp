@@ -373,7 +373,7 @@ WiFiInfo WiFiInfo::fromJson(const QByteArray &json)
 
 QString WiFiInfo::FrequencyUnits()
 {
-    return QStringLiteral("MHZ");
+    return QStringLiteral("MHz");
 }
 
 QT_END_NAMESPACE

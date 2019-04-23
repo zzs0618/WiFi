@@ -1,4 +1,5 @@
 TEMPLATE = subdirs
+CONFIG += debug_and_release
 SUBDIRS += auto
 
 # disable 'make check' on Mac OS X and Windows for the time being

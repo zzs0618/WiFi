@@ -16,8 +16,9 @@
  ** along with this program.  If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#ifndef WIFISCANRESULT_H
-#define WIFISCANRESULT_H
+#ifndef WIFINETWORK_H
+#define WIFINETWORK_H
+
 
 #include <WiFi/wifiglobal.h>
 #include <WiFi/wifi.h>
@@ -25,32 +26,29 @@
 QT_BEGIN_NAMESPACE
 
 class WiFiMacAddress;
-class WiFiScanResultPrivate;
-class WIFI_EXPORT WiFiScanResult
+class WiFiNetworkPrivate;
+class WIFI_EXPORT WiFiNetwork
 {
 public:
-    WiFiScanResult();
-    WiFiScanResult(const WiFiMacAddress &bssid, const QString &ssid);
-    WiFiScanResult(const WiFiScanResult &other);
-    ~WiFiScanResult();
+    WiFiNetwork();
+    WiFiNetwork(int id, const QString &ssid);
+    WiFiNetwork(const WiFiNetwork &other);
+    ~WiFiNetwork();
 
     bool isValid() const;
     bool isCached() const;
 
     void setCached(bool cached);
 
-    WiFiScanResult &operator=(const WiFiScanResult &other);
-    bool operator==(const WiFiScanResult &other) const;
-    bool operator!=(const WiFiScanResult &other) const;
+    WiFiNetwork &operator=(const WiFiNetwork &other);
+    bool operator==(const WiFiNetwork &other) const;
+    bool operator!=(const WiFiNetwork &other) const;
 
-    WiFiMacAddress bssid() const;
+    int networkId() const;
     QString ssid() const;
 
-    qint16 rssi() const;
-    void setRssi(qint16 rssi);
-
-    int frequency() const;
-    void setFrequency(int frequency);
+    WiFiMacAddress bssid() const;
+    void setBSSID(const WiFiMacAddress &bssid);
 
     WiFi::AuthFlags authFlags() const;
     void setAuthFlags(WiFi::AuthFlags auths);
@@ -58,37 +56,28 @@ public:
     WiFi::EncrytionFlags encrFlags() const;
     void setEncrFlags(WiFi::EncrytionFlags encrs);
 
-    QString capabilities() const;
-    void setCapabilities(const QString &flags);
-
-    qint64 timestamp() const;
-    void setTimestamp(qint64 microseconds);
-
-    int networkId() const;
-    void setNetworkId(int id);
-
-    bool is24GHz() const;
-    bool is5GHz() const;
+    QString preSharedKey() const;
+    void setPreSharedKey(const QString &psk);
 
     QString toString() const;
     QVariantMap toMap() const;
     QByteArray toJson() const;
 
-    static WiFiScanResult fromMap(const QVariantMap &map);
-    static WiFiScanResult fromJson(const QByteArray &json);
+    static WiFiNetwork fromMap(const QVariantMap &map);
+    static WiFiNetwork fromJson(const QByteArray &json);
 
 protected:
-    WiFiScanResultPrivate *d_ptr;
+    WiFiNetworkPrivate *d_ptr;
 
 private:
-    Q_DECLARE_PRIVATE(WiFiScanResult)
+    Q_DECLARE_PRIVATE(WiFiNetwork)
 };
 
-class WiFiScanResultList : public QList<WiFiScanResult>
+class WiFiNetworkList : public QList<WiFiNetwork>
 {
 
 };
 
 QT_END_NAMESPACE
 
-#endif // WIFISCANRESULT_H
+#endif // WIFINETWORK_H
