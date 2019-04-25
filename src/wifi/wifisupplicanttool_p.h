@@ -1,5 +1,5 @@
 /**
- ** This file is part of the WifiHelper project.
+ ** This file is part of the WiFi project.
  ** Copyright 2019 张作深 <zhangzuoshen@hangsheng.com.cn>.
  **
  ** This program is free software: you can redistribute it and/or modify
@@ -22,6 +22,11 @@
 #include <QtCore/qobject.h>
 #include <QtCore/qloggingcategory.h>
 
+#include <private/qobject_p.h>
+#include <QtCore/qtimer.h>
+#include <QtCore/qprocess.h>
+#include <QtCore/qsocketnotifier.h>
+
 // in a header
 Q_DECLARE_LOGGING_CATEGORY(logWPA)
 
@@ -32,7 +37,7 @@ class WiFiSupplicantTool : public QObject
 {
     Q_OBJECT
 public:
-    explicit WiFiSupplicantTool(QObject *parent = nullptr);
+    static WiFiSupplicantTool *instance();
 
     /* PING: 此命令可用于测试 wpa_supplicant 是否响应控制接口命令。
      * 如果连接打开且 wpa_supplicant 正在处理命令，则预期的响应是: PONG 。
@@ -254,13 +259,54 @@ public:
     QString p2p_reject() const;
 
 public slots:
-    void enable();
-    void disable();
+    void start();
+    void stop();
 
 signals:
+    void supplicantStarted();
+    void supplicantFinished();
+    void messageReceived(const QString &msg);
+
+private:
+    explicit WiFiSupplicantTool(QObject *parent = nullptr);
 
 private:
     Q_DECLARE_PRIVATE(WiFiSupplicantTool)
+
+    Q_PRIVATE_SLOT(d_func(), void _q_startSupplicantDone())
+    Q_PRIVATE_SLOT(d_func(), void _q_stopSupplicantDone(int, QProcess::ExitStatus))
+    Q_PRIVATE_SLOT(d_func(), void _q_supplicantError(QProcess::ProcessError))
+};
+
+class WiFiSupplicantToolPrivate : public QObjectPrivate
+{
+    Q_DECLARE_PUBLIC(WiFiSupplicantTool)
+public:
+    WiFiSupplicantToolPrivate();
+    ~WiFiSupplicantToolPrivate();
+
+    void startSupplicant();
+    void stopSupplicant();
+    void _q_startSupplicantDone();
+    void _q_stopSupplicantDone(int exitCode, QProcess::ExitStatus exitStatus);
+    void _q_supplicantError(QProcess::ProcessError error);
+
+    void wpaProcessMsg(char *msg);
+    void wpaMonitorMsg();
+
+    bool wpaOpenConnection();
+    bool wpaCloseConnection();
+    QString wpaCtrlRequest(const QString &command) const;
+
+    QTimer *m_tryOpenTimer = NULL;
+    QProcess *m_wpaProcess = NULL;
+    QSocketNotifier *m_wpaMonitor = NULL;
+
+    QString m_interface;
+    QString m_interfacePath;
+
+    struct wpa_ctrl *ctrl_conn = NULL;
+    struct wpa_ctrl *monitor_conn = NULL;
 };
 
 QT_END_NAMESPACE

@@ -25,6 +25,7 @@
 #include <WiFi/wifiscanresult.h>
 #include <WiFi/wifinetwork.h>
 
+class WiFiManagerPrivate;
 class WIFI_EXPORT WiFiManager : public QObject
 {
     Q_OBJECT
@@ -52,6 +53,9 @@ public slots:
 
 signals:
     void wifiStateChanged();
+
+private:
+    Q_DECLARE_PRIVATE(WiFiManager)
 };
 
 #endif // WIFIMANAGER_H

@@ -17,6 +17,10 @@
  **/
 
 #include "wifimanager.h"
+#include "wifisupplicanttool_p.h"
+
+#include <private/qobject_p.h>
+
 
 /*!
     \class WiFiManager
@@ -28,12 +32,34 @@
 */
 
 
+class WiFiManagerPrivate : public QObjectPrivate
+{
+    Q_DECLARE_PUBLIC(WiFiManager)
+public:
+    WiFiManagerPrivate();
+    ~WiFiManagerPrivate();
+
+    WiFiSupplicantTool *tool = NULL;
+
+    bool m_enabled = false;
+};
+
+WiFiManagerPrivate::WiFiManagerPrivate()
+    : QObjectPrivate()
+    , tool(WiFiSupplicantTool::instance())
+{
+}
+
+WiFiManagerPrivate::~WiFiManagerPrivate()
+{
+}
+
 /*!
     构造一个 WiFiManager 对象。
 */
-WiFiManager::WiFiManager(QObject *parent) : QObject(parent)
+WiFiManager::WiFiManager(QObject *parent)
+    : QObject(*(new WiFiManagerPrivate), parent)
 {
-
 }
 
 WiFi::State WiFiManager::wifiState() const
@@ -43,11 +69,17 @@ WiFi::State WiFiManager::wifiState() const
 
 bool WiFiManager::isWiFiEnabled() const
 {
-    return false;
+    Q_D(const WiFiManager);
+    return d->m_enabled;
 }
+
 void WiFiManager::setWifiEnabled(bool enabled)
 {
-    Q_UNUSED(enabled);
+    Q_D(WiFiManager);
+    if(enabled != d->m_enabled) {
+        d->m_enabled = enabled;
+        emit wifiStateChanged();
+    }
 }
 
 bool WiFiManager::is5GHzBandSupported() const
