@@ -30,6 +30,7 @@ class WIFI_EXPORT WiFiScanResult
 {
 public:
     WiFiScanResult();
+    WiFiScanResult(const QString &bssid, const QString &ssid);
     WiFiScanResult(const WiFiMacAddress &bssid, const QString &ssid);
     WiFiScanResult(const WiFiScanResult &other);
     ~WiFiScanResult();
@@ -51,15 +52,15 @@ public:
 
     int frequency() const;
     void setFrequency(int frequency);
+    /*
+        WiFi::AuthFlags authFlags() const;
+        void setAuthFlags(WiFi::AuthFlags auths);
 
-    WiFi::AuthFlags authFlags() const;
-    void setAuthFlags(WiFi::AuthFlags auths);
-
-    WiFi::EncrytionFlags encrFlags() const;
-    void setEncrFlags(WiFi::EncrytionFlags encrs);
-
-    QString capabilities() const;
-    void setCapabilities(const QString &flags);
+        WiFi::EncrytionFlags encrFlags() const;
+        void setEncrFlags(WiFi::EncrytionFlags encrs);
+    */
+    QString flags() const;
+    void setFlags(const QString &flags);
 
     qint64 timestamp() const;
     void setTimestamp(qint64 microseconds);

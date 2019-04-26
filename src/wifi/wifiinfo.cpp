@@ -29,9 +29,7 @@ class WiFiInfoPrivate
 public:
     WiFiInfoPrivate();
 
-    bool valid;
-    bool cached;
-
+    WiFiMacAddress address;
     WiFiMacAddress bssid;
     QString ssid;
     qint16 rssi;
@@ -43,8 +41,6 @@ public:
 };
 
 WiFiInfoPrivate::WiFiInfoPrivate() :
-    valid(false),
-    cached(false),
     rssi(-100),
     frequency(0),
     networkId(-1),
@@ -64,26 +60,11 @@ WiFiInfoPrivate::WiFiInfoPrivate() :
 
 
 /*!
-    构造一个无效的 WiFiInfo 对象。
+    构造一个空的 WiFiInfo 对象。
 */
 WiFiInfo::WiFiInfo() :
     d_ptr(new WiFiInfoPrivate)
 {
-}
-
-/*!
-    构造一个 WiFiInfo 对象，该对象具有 BSSID 和 SSID 。
-*/
-WiFiInfo::WiFiInfo(const WiFiMacAddress &bssid, const QString &ssid) :
-    d_ptr(new WiFiInfoPrivate)
-{
-    Q_D(WiFiInfo);
-
-    d->bssid = bssid;
-    d->ssid = ssid;
-    d->valid = true;
-    d->cached = false;
-    d->rssi = -100;
 }
 
 /*!
@@ -104,44 +85,15 @@ WiFiInfo::~WiFiInfo()
 }
 
 /*!
-    如果 WiFiInfo 对象有效，则返回 true， 否则返回 false 。
-*/
-bool WiFiInfo::isValid() const
-{
-    Q_D(const WiFiInfo);
-    return d->valid;
-}
-
-/*!
-     如果从缓存的数据创建 WiFiInfo 对象，则返回true。
- */
-bool WiFiInfo::isCached() const
-{
-    Q_D(const WiFiInfo);
-    return d->cached;
-}
-
-/*!
-    如果从缓存的数据创建 WiFiInfo 对象，则系统将使用它设置 \a cached 缓存标志。
-    缓存信息可能不如从活动设备读取的数据准确。
-  */
-void WiFiInfo::setCached(bool cached)
-{
-    Q_D(WiFiInfo);
-    d->cached = cached;
-}
-
-/*!
     将\a other分配到此 WiFiInfo 对象。
 */
 WiFiInfo &WiFiInfo::operator=(const WiFiInfo &other)
 {
     Q_D(WiFiInfo);
 
+    d->address = other.d_func()->address;
     d->bssid = other.d_func()->bssid;
     d->ssid = other.d_func()->ssid;
-    d->valid = other.d_func()->valid;
-    d->cached = other.d_func()->cached;
     d->rssi = other.d_func()->rssi;
     d->frequency = other.d_func()->frequency;
     d->ipAddress = other.d_func()->ipAddress;
@@ -161,7 +113,15 @@ bool WiFiInfo::operator==(const WiFiInfo &other) const
 {
     Q_D(const WiFiInfo);
 
-    return d->bssid == other.d_func()->bssid;
+    return d->address == other.d_func()->address &&
+           d->bssid == other.d_func()->bssid &&
+           d->ssid == other.d_func()->ssid &&
+           d->rssi == other.d_func()->rssi &&
+           d->frequency == other.d_func()->frequency &&
+           d->ipAddress == other.d_func()->ipAddress &&
+           d->networkId == other.d_func()->networkId &&
+           d->rxLinkSpeedMbps == other.d_func()->rxLinkSpeedMbps &&
+           d->txLinkSpeedMbps == other.d_func()->txLinkSpeedMbps;
 }
 
 /*!
@@ -175,12 +135,33 @@ bool WiFiInfo::operator!=(const WiFiInfo &other) const
 }
 
 /*!
+    返回　WiFi 物理设备的地址。
+*/
+WiFiMacAddress WiFiInfo::macAddress() const
+{
+    Q_D(const WiFiInfo);
+    return d->address;
+}
+
+void WiFiInfo::setMacAddress(const WiFiMacAddress &address)
+{
+    Q_D(WiFiInfo);
+    d->address = address;
+}
+
+/*!
     返回当前访问点的基本服务集标识符(BSSID)。
 */
 WiFiMacAddress WiFiInfo::bssid() const
 {
     Q_D(const WiFiInfo);
     return d->bssid;
+}
+
+void WiFiInfo::setBSSID(const WiFiMacAddress &bssid)
+{
+    Q_D(WiFiInfo);
+    d->bssid = bssid;
 }
 
 /*!
@@ -190,6 +171,12 @@ QString WiFiInfo::ssid() const
 {
     Q_D(const WiFiInfo);
     return d->ssid;
+}
+
+void WiFiInfo::setSSID(const QString &ssid)
+{
+    Q_D(WiFiInfo);
+    d->ssid = ssid;
 }
 
 /*!
@@ -308,7 +295,8 @@ QString WiFiInfo::toString() const
                              "RSSI  = %3\n"
                              "Freq  = %4 %5\n"
                              "IP    = %6\n"
-                             "NetId = %7\n"));
+                             "NetId = %7\n"
+                             "MAC   = %8\n"));
     s = s.arg(d->bssid.toString());
     s = s.arg(d->ssid);
     s = s.arg(d->rssi);
@@ -316,6 +304,7 @@ QString WiFiInfo::toString() const
     s = s.arg(WiFiInfo::FrequencyUnits());
     s = s.arg(d->ipAddress);
     s = s.arg(d->networkId);
+    s = s.arg(d->address.toString());
 
     return s;
 }
@@ -324,6 +313,7 @@ QVariantMap WiFiInfo::toMap() const
 {
     Q_D(const WiFiInfo);
     QVariantMap map;
+    map[QLatin1String("address")] = d->address.toString();
     map[QLatin1String("bssid")] = d->bssid.toString();
     map[QLatin1String("ssid")] = d->ssid;
     map[QLatin1String("rssi")] = d->rssi;
@@ -343,13 +333,14 @@ QByteArray WiFiInfo::toJson() const
 
 WiFiInfo WiFiInfo::fromMap(const QVariantMap &map)
 {
-    WiFiMacAddress bssid(map[QLatin1String("bssid")].toString());
-    if(bssid.isNull()) {
-        qCritical() << "WiFiInfo::fromMap. Error at: bssid is null." ;
+    if(map.isEmpty()) {
+        qCritical() << "WiFiInfo::fromMap. Error at: map is Empty." ;
         return WiFiInfo();
     }
-    QString ssid = map[QLatin1String("ssid")].toString();
-    WiFiInfo info(bssid, ssid);
+    WiFiInfo info;
+    info.setMacAddress(WiFiMacAddress(map[QLatin1String("address")].toString()));
+    info.setBSSID(WiFiMacAddress(map[QLatin1String("bssid")].toString()));
+    info.setSSID(map[QLatin1String("ssid")].toString());
     info.setRssi(map[QLatin1String("rssi")].toInt());
     info.setFrequency(map[QLatin1String("freq")].toInt());
     info.setIpAddress(map[QLatin1String("ip")].toString());

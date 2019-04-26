@@ -33,7 +33,8 @@ HEADERS += \
     $$PWD/wifi.h \
     $$PWD/wifinetwork.h \
     $$PWD/wifimanager.h \
-    $$PWD/wifisupplicanttool_p.h
+    $$PWD/wifisupplicanttool_p.h \
+    $$PWD/wifimanager_p.h
 
 SOURCES += \
     $$PWD/wifimacaddress.cpp \

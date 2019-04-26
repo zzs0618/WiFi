@@ -58,7 +58,7 @@ WiFiSupplicantToolPrivate::WiFiSupplicantToolPrivate()
     }
 
     m_interface = QString::fromLocal8Bit(WIFI_WPA_INTERFACE);
-    m_interfacePath = QString(QLatin1String("%1/%2")).arg(QString::fromLocal8Bit(
+    m_interfacePath = QString(QStringLiteral("%1/%2")).arg(QString::fromLocal8Bit(
                                       WIFI_WPA_INTERFACE_DIR)).arg(m_interface);
 }
 
@@ -88,7 +88,7 @@ void WiFiSupplicantToolPrivate::startSupplicant()
         q->connect(m_wpaProcess, SIGNAL(finished(int, QProcess::ExitStatus)), q,
                    SLOT(_q_stopSupplicantDone(int, QProcess::ExitStatus)));
         q->connect(m_wpaProcess, SIGNAL(errorOccurred(QProcess::ProcessError)), q,
-                   SLOT(_q_supplicantError(QProcess::ProcessError)));
+                   SLOT(_q_supplicantCrashed(QProcess::ProcessError)));
     }
 
     m_wpaProcess->start();
@@ -110,15 +110,11 @@ void WiFiSupplicantToolPrivate::_q_startSupplicantDone()
 
     if(!m_tryOpenTimer) {
         m_tryOpenTimer = new QTimer(q);
-        m_tryOpenTimer->connect(m_tryOpenTimer, &QTimer::timeout, [&]() {
-            if(m_wpaProcess->state() == QProcess::Running) {
-                if(wpaOpenConnection()) {
-                    m_tryOpenTimer->stop();
-                    Q_EMIT q->supplicantStarted();
-                }
-            }
-        });
+        m_tryOpenTimer->setSingleShot(true);
+        m_tryOpenTimer->connect(m_tryOpenTimer, SIGNAL(timeout()), q,
+                                SLOT(_q_tryOpenTimeout()));
     }
+
     m_tryOpenTimer->start(1000);
 }
 
@@ -135,9 +131,10 @@ void WiFiSupplicantToolPrivate::_q_stopSupplicantDone(int exitCode,
     Q_EMIT q->supplicantFinished();
 }
 
-void WiFiSupplicantToolPrivate::_q_supplicantError(QProcess::ProcessError error)
+void WiFiSupplicantToolPrivate::_q_supplicantCrashed(QProcess::ProcessError
+        error)
 {
-    qCCritical(logWPA, "[ ERROR ] wpa_supplicant is error.\n%s",
+    qCCritical(logWPA, "[ ERROR ] wpa_supplicant is Crashed.\n%s",
                qUtf8Printable(this->m_wpaProcess->errorString()));
     switch (error) {
         case QProcess::FailedToStart:
@@ -146,6 +143,17 @@ void WiFiSupplicantToolPrivate::_q_supplicantError(QProcess::ProcessError error)
             break;
         default:
             break;
+    }
+}
+
+void WiFiSupplicantToolPrivate::_q_tryOpenTimeout()
+{
+    Q_Q(WiFiSupplicantTool);
+
+    if(m_wpaProcess->state() == QProcess::Running) {
+        if(wpaOpenConnection()) {
+            Q_EMIT q->supplicantStarted();
+        }
     }
 }
 
@@ -189,24 +197,25 @@ bool WiFiSupplicantToolPrivate::wpaOpenConnection()
         return true;
     }
 
-    const char *ctrl_path = m_interfacePath.toLocal8Bit().constData();
-
-    ctrl_conn = wpa_ctrl_open(ctrl_path);
+    ctrl_conn = wpa_ctrl_open(qPrintable(m_interfacePath));
     if (ctrl_conn == NULL) {
-        qCCritical(logWPA, "[ ERROR ] Failed to Open WPA Connection");
+        qCCritical(logWPA, "[ ERROR ] Failed to Open WPA Connection\n%s",
+                   qPrintable(m_interfacePath));
         return false;
     }
 
-    monitor_conn = wpa_ctrl_open(ctrl_path);
+    monitor_conn = wpa_ctrl_open(qPrintable(m_interfacePath));
     if (monitor_conn == NULL) {
-        qCCritical(logWPA, "[ ERROR ] Failed to Open WPA Monitor");
+        qCCritical(logWPA, "[ ERROR ] Failed to Open WPA Monitor\n%s",
+                   qPrintable(m_interfacePath));
         wpa_ctrl_close(ctrl_conn);
         ctrl_conn = NULL;
         return false;
     }
 
     if (wpa_ctrl_attach(monitor_conn)) {
-        qCCritical(logWPA, "[ ERROR ] Failed to Attach WPA Connection");
+        qCCritical(logWPA, "[ ERROR ] Failed to Attach WPA Connection\n%s",
+                   qPrintable(m_interfacePath));
         wpa_ctrl_close(monitor_conn);
         monitor_conn = NULL;
         wpa_ctrl_close(ctrl_conn);
@@ -221,6 +230,7 @@ bool WiFiSupplicantToolPrivate::wpaOpenConnection()
                             &WiFiSupplicantToolPrivate::wpaMonitorMsg);
 #endif
 
+    qCDebug(logWPA, "[ SUCCESS ] Open WPA Connection");
     return true;
 }
 
@@ -364,7 +374,6 @@ QString WiFiSupplicantTool::bss(int idx) const
     QString command = QStringLiteral("BSS %1");
     command = command.arg(idx);
     return d->wpaCtrlRequest(command);
-    // "bssid / frequency / signal level / flags / ssid\n00:09:5b:95:e0:4e\t2412\t-40\t[WPA2-PSK-CCMP][WPS][ESS]\tjkm private\n"
 }
 
 QString WiFiSupplicantTool::bss(const QString &bssid) const
@@ -373,7 +382,6 @@ QString WiFiSupplicantTool::bss(const QString &bssid) const
     QString command = QStringLiteral("BSS %1");
     command = command.arg(bssid);
     return d->wpaCtrlRequest(command);
-    // "bssid / frequency / signal level / flags / ssid\n00:09:5b:95:e0:4e\t2412\t-40\t[WPA2-PSK-CCMP][WPS][ESS]\tjkm private\n"
 }
 
 QString WiFiSupplicantTool::add_network() const
@@ -571,6 +579,12 @@ QString WiFiSupplicantTool::p2p_reject() const
     Q_D(const WiFiSupplicantTool);
     QString command = QStringLiteral("P2P_REJECT");
     return d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+}
+
+bool WiFiSupplicantTool::isRunning() const
+{
+    Q_D(const WiFiSupplicantTool);
+    return d->ctrl_conn != NULL;
 }
 
 void WiFiSupplicantTool::start()

@@ -1,4 +1,6 @@
 TEMPLATE = subdirs
 SUBDIRS += \
-    cmake \
-    unit
+    cmake
+!linux-oe-g++ {
+    SUBDIRS += unit
+}

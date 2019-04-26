@@ -53,9 +53,16 @@ public slots:
 
 signals:
     void wifiStateChanged();
+    void connectionInfoChanged();
+    void scanResultFound(const WiFiScanResult &result);
+    void scanResultUpdated(const WiFiScanResult &result);
+    void scanResultLost(const WiFiScanResult &result);
+    void networksChanged();
 
 private:
     Q_DECLARE_PRIVATE(WiFiManager)
+
+    Q_PRIVATE_SLOT(d_func(), void _q_updateInfoTimeout())
 };
 
 #endif // WIFIMANAGER_H

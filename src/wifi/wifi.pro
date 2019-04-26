@@ -12,10 +12,12 @@ DEFINES += QT_NO_CAST_TO_ASCII QT_NO_CAST_FROM_ASCII QT_NO_CAST_FROM_BYTEARRAY Q
 
 HEADERS += \
     $$PWD/wifiglobal_p.h \
-    $$PWD/wifiglobal.h
+    $$PWD/wifiglobal.h \
+    wifisupplicantparser_p.h
 
 SOURCES += \
-    wifiglobal.cpp
+    wifiglobal.cpp \
+    wifisupplicantparser.cpp
 
 include(wifi.pri)
 load(qt_module)

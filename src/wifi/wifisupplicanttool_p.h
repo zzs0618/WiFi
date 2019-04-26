@@ -258,6 +258,9 @@ public:
      */
     QString p2p_reject() const;
 
+public:
+    bool isRunning() const;
+
 public slots:
     void start();
     void stop();
@@ -275,7 +278,8 @@ private:
 
     Q_PRIVATE_SLOT(d_func(), void _q_startSupplicantDone())
     Q_PRIVATE_SLOT(d_func(), void _q_stopSupplicantDone(int, QProcess::ExitStatus))
-    Q_PRIVATE_SLOT(d_func(), void _q_supplicantError(QProcess::ProcessError))
+    Q_PRIVATE_SLOT(d_func(), void _q_supplicantCrashed(QProcess::ProcessError))
+    Q_PRIVATE_SLOT(d_func(), void _q_tryOpenTimeout())
 };
 
 class WiFiSupplicantToolPrivate : public QObjectPrivate
@@ -289,7 +293,8 @@ public:
     void stopSupplicant();
     void _q_startSupplicantDone();
     void _q_stopSupplicantDone(int exitCode, QProcess::ExitStatus exitStatus);
-    void _q_supplicantError(QProcess::ProcessError error);
+    void _q_supplicantCrashed(QProcess::ProcessError error);
+    void _q_tryOpenTimeout();
 
     void wpaProcessMsg(char *msg);
     void wpaMonitorMsg();

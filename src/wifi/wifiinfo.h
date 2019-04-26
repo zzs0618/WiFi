@@ -29,21 +29,21 @@ class WIFI_EXPORT WiFiInfo
 {
 public:
     WiFiInfo();
-    WiFiInfo(const WiFiMacAddress &bssid, const QString &ssid);
     WiFiInfo(const WiFiInfo &other);
     ~WiFiInfo();
-
-    bool isValid() const;
-    bool isCached() const;
-
-    void setCached(bool cached);
 
     WiFiInfo &operator=(const WiFiInfo &other);
     bool operator==(const WiFiInfo &other) const;
     bool operator!=(const WiFiInfo &other) const;
 
+    WiFiMacAddress macAddress() const;
+    void setMacAddress(const WiFiMacAddress &address);
+
     WiFiMacAddress bssid() const;
+    void setBSSID(const WiFiMacAddress &bssid);
+
     QString ssid() const;
+    void setSSID(const QString &ssid);
 
     qint16 rssi() const;
     void setRssi(qint16 rssi);

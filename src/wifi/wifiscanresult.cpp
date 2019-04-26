@@ -38,7 +38,7 @@ public:
     int frequency;
     WiFi::AuthFlags authFlags;
     WiFi::EncrytionFlags encrFlags;
-    QString capabilities;
+    QString flags;
     qint64 timestamp;
     int networkId;
 };
@@ -72,6 +72,14 @@ WiFiScanResult::WiFiScanResult() :
     d_ptr(new WiFiScanResultPrivate)
 {
 
+}
+
+/*!
+    构造一个 WiFiScanResult 对象，该对象具有 BSSID 和 SSID 。
+*/
+WiFiScanResult::WiFiScanResult(const QString &bssid, const QString &ssid)
+    : WiFiScanResult(WiFiMacAddress(bssid), ssid)
+{
 }
 
 /*!
@@ -150,7 +158,7 @@ WiFiScanResult &WiFiScanResult::operator=(const WiFiScanResult &other)
     d->frequency = other.d_func()->frequency;
     d->authFlags = other.d_func()->authFlags;
     d->encrFlags = other.d_func()->encrFlags;
-    d->capabilities = other.d_func()->capabilities;
+    d->flags = other.d_func()->flags;
     d->timestamp = other.d_func()->timestamp;
     d->networkId = other.d_func()->networkId;
 
@@ -236,55 +244,55 @@ void WiFiScanResult::setFrequency(int frequency)
 /*!
     返回描述访问点支持的身份验证、密钥管理和加密方案。
 */
-WiFi::AuthFlags WiFiScanResult::authFlags() const
-{
-    Q_D(const WiFiScanResult);
-    return d->authFlags;
-}
+//WiFi::AuthFlags WiFiScanResult::authFlags() const
+//{
+//    Q_D(const WiFiScanResult);
+//    return d->authFlags;
+//}
 
 /*!
   设置 \a frequency 频率值，内部使用。
   */
-void WiFiScanResult::setAuthFlags(WiFi::AuthFlags auths)
-{
-    Q_D(WiFiScanResult);
-    d->authFlags = auths;
-}
+//void WiFiScanResult::setAuthFlags(WiFi::AuthFlags auths)
+//{
+//    Q_D(WiFiScanResult);
+//    d->authFlags = auths;
+//}
 
 /*!
     返回描述访问点支持的身份验证、密钥管理和加密方案。
 */
-WiFi::EncrytionFlags WiFiScanResult::encrFlags() const
-{
-    Q_D(const WiFiScanResult);
-    return d->encrFlags;
-}
+//WiFi::EncrytionFlags WiFiScanResult::encrFlags() const
+//{
+//    Q_D(const WiFiScanResult);
+//    return d->encrFlags;
+//}
 
 /*!
   设置 \a frequency 频率值，内部使用。
   */
-void WiFiScanResult::setEncrFlags(WiFi::EncrytionFlags encrs)
-{
-    Q_D(WiFiScanResult);
-    d->encrFlags = encrs;
-}
+//void WiFiScanResult::setEncrFlags(WiFi::EncrytionFlags encrs)
+//{
+//    Q_D(WiFiScanResult);
+//    d->encrFlags = encrs;
+//}
 
 /*!
     返回描述访问点支持的身份验证、密钥管理和加密方案。
 */
-QString WiFiScanResult::capabilities() const
+QString WiFiScanResult::flags() const
 {
     Q_D(const WiFiScanResult);
-    return d->capabilities;
+    return d->flags;
 }
 
 /*!
   设置 \a flags 描述访问点支持的身份验证、密钥管理和加密方案，内部使用。
   */
-void WiFiScanResult::setCapabilities(const QString &flags)
+void WiFiScanResult::setFlags(const QString &flags)
 {
     Q_D(WiFiScanResult);
-    d->capabilities = flags;
+    d->flags = flags;
 }
 
 /*!
@@ -352,18 +360,16 @@ QString WiFiScanResult::toString() const
                              "SSID  = %2\n"
                              "RSSI  = %3\n"
                              "Freq  = %4 MHz\n"
-                             "Auths = %5\n"
-                             "Encrs = %6\n"
-                             "Times = %L7 ms\n"
-                             "2.4G  = %8\n"
-                             "5G    = %9\n"
-                             "NetId = %10\n"));
+                             "Flags = %5\n"
+                             "Times = %L6 ms\n"
+                             "2.4G  = %7\n"
+                             "5G    = %8\n"
+                             "NetId = %9\n"));
     s = s.arg(d->bssid.toString());
     s = s.arg(d->ssid);
     s = s.arg(d->rssi);
     s = s.arg(d->frequency);
-    s = s.arg(WiFi::toString(d->authFlags));
-    s = s.arg(WiFi::toString(d->encrFlags));
+    s = s.arg(d->flags);
     s = s.arg(d->timestamp);
     s = s.arg(is24GHz() ? QLatin1String("true") : QLatin1String("false"));
     s = s.arg(is5GHz() ? QLatin1String("true") : QLatin1String("false"));
@@ -381,8 +387,9 @@ QVariantMap WiFiScanResult::toMap() const
     map[QLatin1String("ssid")] = d->ssid;
     map[QLatin1String("rssi")] = d->rssi;
     map[QLatin1String("freq")] = d->frequency;
-    map[QLatin1String("auths")] = static_cast<int>(d->authFlags);
-    map[QLatin1String("encrs")] = static_cast<int>(d->encrFlags);
+    map[QLatin1String("flags")] = d->flags;
+    //    map[QLatin1String("auths")] = static_cast<int>(d->authFlags);
+    //    map[QLatin1String("encrs")] = static_cast<int>(d->encrFlags);
     map[QLatin1String("timestamp")] = d->timestamp;
     map[QLatin1String("netId")] = d->networkId;
 
@@ -407,11 +414,11 @@ WiFiScanResult WiFiScanResult::fromMap(const QVariantMap &map)
     WiFiScanResult info(bssid, ssid);
     info.setRssi(map[QLatin1String("rssi")].toInt());
     info.setFrequency(map[QLatin1String("freq")].toInt());
-
-    int auths = map[QLatin1String("auths")].toInt();
-    int encrs = map[QLatin1String("encrs")].toInt();
-    info.setAuthFlags(static_cast<WiFi::AuthFlags>(auths));
-    info.setEncrFlags(static_cast<WiFi::EncrytionFlags>(encrs));
+    info.setFlags(map[QLatin1String("flags")].toString());
+    //    int auths = map[QLatin1String("auths")].toInt();
+    //    int encrs = map[QLatin1String("encrs")].toInt();
+    //    info.setAuthFlags(static_cast<WiFi::AuthFlags>(auths));
+    //    info.setEncrFlags(static_cast<WiFi::EncrytionFlags>(encrs));
     info.setTimestamp(map[QLatin1String("timestamp")].toLongLong());
     info.setNetworkId(map[QLatin1String("netId")].toInt());
 
