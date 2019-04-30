@@ -34,7 +34,14 @@ HEADERS += \
     $$PWD/wifinetwork.h \
     $$PWD/wifimanager.h \
     $$PWD/wifisupplicanttool_p.h \
-    $$PWD/wifimanager_p.h
+    $$PWD/wifimanager_p.h \
+    $$PWD/wifinative.h \
+    $$PWD/wifinative_p.h \
+    $$PWD/wifinativestub_p.h \
+    $$PWD/wifiservice.h \
+    $$PWD/wifisupplicantparser_p.h \
+    $$PWD/wifinativeproxy_p.h \
+    $$PWD/wifidbus_p.h
 
 SOURCES += \
     $$PWD/wifimacaddress.cpp \
@@ -43,4 +50,9 @@ SOURCES += \
     $$PWD/wifi.cpp \
     $$PWD/wifinetwork.cpp \
     $$PWD/wifimanager.cpp \
-    $$PWD/wifisupplicanttool.cpp
+    $$PWD/wifisupplicanttool.cpp \
+    $$PWD/wifinative.cpp \
+    $$PWD/wifinativestub.cpp \
+    $$PWD/wifiservice.cpp \
+    $$PWD/wifisupplicantparser.cpp \
+    $$PWD/wifinativeproxy.cpp

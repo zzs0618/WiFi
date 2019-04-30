@@ -21,6 +21,11 @@
 
 #include "common/wpa_ctrl.h"
 
+// in a header
+Q_DECLARE_LOGGING_CATEGORY(logMan)
+// in one source file
+Q_LOGGING_CATEGORY(logMan, "wifi.manager")
+
 /*!
     \class WiFiManager
     \inmodule WiFi
@@ -30,137 +35,14 @@
     该类提供用于管理 Wi-Fi 连接的所有方面的主要 API 。
 */
 
+
 WiFiManagerPrivate::WiFiManagerPrivate()
     : QObjectPrivate()
-    , tool(WiFiSupplicantTool::instance())
 {
 }
 
 WiFiManagerPrivate::~WiFiManagerPrivate()
 {
-}
-
-void WiFiManagerPrivate::_q_updateInfoTimeout()
-{
-    Q_Q(WiFiManager);
-
-    WiFiInfo info = parser.fromStatus(tool->status());
-    if(info != m_info) {
-        m_info = info;
-
-        Q_EMIT q->connectionInfoChanged();
-    }
-
-    WiFiNetworkList list = parser.fromListNetworks(tool->list_networks());
-    int oldId = m_networks.isEmpty() ? -1 : m_networks.last().networkId();
-    int newId = list.isEmpty() ? -1 : list.last().networkId();
-    if(oldId == newId) {
-        return;
-    }
-
-    m_networks.clear();
-    m_netIdMapping.clear();
-
-    for(int i = 0; i < list.length(); ++i) {
-        WiFiNetwork network = list.at(i);
-        int id = network.networkId();
-
-        WiFiMacAddress bssid = WiFiMacAddress(tool->get_network(id,
-                                              QStringLiteral("bssid")));
-        QString proto = tool->get_network(id, QStringLiteral("proto"));
-        QString key_mgmt = tool->get_network(id, QStringLiteral("key_mgmt"));
-        QString pairwise = tool->get_network(id, QStringLiteral("pairwise"));
-        QString psk = tool->get_network(id, QStringLiteral("psk"));
-        network.setBSSID(bssid);
-        network.setPreSharedKey(psk);
-        network.setAuthFlags(parser.fromProtoKeyMgmt(proto, key_mgmt));
-        network.setEncrFlags(parser.fromPairwise(pairwise));
-
-        m_networks << network;
-        m_netIdMapping.insert(bssid.toString() + network.ssid(), id);
-
-    }
-    Q_EMIT q->networksChanged();
-
-    for(int i = 0; i < m_scanResults.length(); ++i) {
-        QString key = m_scanResults[i].bssid().toString() + m_scanResults[i].ssid();
-        int id = m_netIdMapping.value(key, -1);
-        if(m_scanResults[i].networkId() != id) {
-            m_scanResults[i].setNetworkId(id);
-            Q_EMIT q->scanResultUpdated(m_scanResults[i]);
-        }
-    }
-}
-
-void WiFiManagerPrivate::onSupplicantStarted()
-{
-    Q_Q(WiFiManager);
-
-    if(m_state == WiFi::StateEnabling || m_state == WiFi::StateEnabled) {
-        tool->reassociate();
-        m_state = WiFi::StateEnabled;
-    } else {
-        tool->disconnect();
-        m_state = WiFi::StateDisabled;
-    }
-
-    if(!timer_Info) {
-        timer_Info = new QTimer(q);
-        timer_Info->setInterval(1000);
-        timer_Info->connect(timer_Info, SIGNAL(timeout()), q,
-                            SLOT(_q_updateInfoTimeout()));
-    }
-    timer_Info->start();
-    Q_EMIT q->wifiStateChanged();
-}
-
-void WiFiManagerPrivate::onSupplicantFinished()
-{
-    Q_Q(WiFiManager);
-
-    timer_Info->stop();
-
-    if(m_state != WiFi::StateDisabled) {
-        m_state = WiFi::StateDisabled;
-        Q_EMIT q->wifiStateChanged();
-    }
-}
-
-void WiFiManagerPrivate::onMessageReceived(const QString &msg)
-{
-    Q_Q(WiFiManager);
-
-    if(msg.startsWith(QStringLiteral(WPA_EVENT_SCAN_RESULTS))) {
-
-    } else if(msg.startsWith(QStringLiteral(WPA_EVENT_BSS_ADDED))) {
-        QRegExp rx(QStringLiteral("(\\d+)(?:\\s*)"
-                                  "([0-9a-fA-F]{2}(?:[:][0-9a-fA-F]{2}){5})"));
-        int pos = rx.indexIn(msg);
-        if (pos > -1) {
-            // QString index = rxlen.cap(1);
-            QString bssid = rx.cap(2);
-            WiFiScanResult result = parser.fromBSS(tool->bss(bssid));
-            if(result.isValid()) {
-                QString key = result.bssid().toString() + result.ssid();
-                result.setNetworkId(m_netIdMapping.value(key, -1));
-
-                m_scanResults << result;
-                Q_EMIT q->scanResultFound(result);
-            }
-        }
-    } else if(msg.startsWith(QStringLiteral(WPA_EVENT_BSS_REMOVED))) {
-        QRegExp rx(QStringLiteral("(\\d+)(?:\\s*)"
-                                  "([0-9a-fA-F]{2}(?:[:][0-9a-fA-F]{2}){5})"));
-        int pos = rx.indexIn(msg);
-        if (pos > -1) {
-            // QString index = rxlen.cap(1);
-            QString bssid = rx.cap(2);
-            int index = m_scanResults.indexOf(WiFiScanResult(bssid, QString()));
-            if(index >= 0) {
-                Q_EMIT q->scanResultLost(m_scanResults.takeAt(index));
-            }
-        }
-    }
 }
 
 /*!
@@ -171,54 +53,26 @@ WiFiManager::WiFiManager(QObject * parent)
 {
     Q_D(WiFiManager);
 
-    QObjectPrivate::connect(d->tool, &WiFiSupplicantTool::supplicantStarted, d,
-                            &WiFiManagerPrivate::onSupplicantStarted);
-    QObjectPrivate::connect(d->tool, &WiFiSupplicantTool::supplicantFinished, d,
-                            &WiFiManagerPrivate::onSupplicantFinished);
-    QObjectPrivate::connect(d->tool, &WiFiSupplicantTool::messageReceived, d,
-                            &WiFiManagerPrivate::onMessageReceived);
-}
-
-WiFi::State WiFiManager::wifiState() const
-{
-    return WiFi::StateDisabling;
+    connect(d->m_proxy, SIGNAL(isWiFiEnabledChanged()), this,
+            SIGNAL(isWiFiEnabledChanged()));
+    connect(d->m_proxy, SIGNAL(connectionInfoChanged()), this,
+            SIGNAL(connectionInfoChanged()));
+    connect(d->m_proxy, SIGNAL(scanResultsChanged()), this,
+            SIGNAL(scanResultsChanged()));
+    connect(d->m_proxy, SIGNAL(networksChanged()), this, SIGNAL(networksChanged()));
 }
 
 bool WiFiManager::isWiFiEnabled() const
 {
     Q_D(const WiFiManager);
-    return d->m_state != WiFi::StateEnabled;
+    return d->m_proxy->isWiFiEnabled();
 }
 
-void WiFiManager::setWifiEnabled(bool enabled)
+void WiFiManager::setWiFiEnabled(bool enabled)
 {
     Q_D(WiFiManager);
-    if(enabled) {
-        if(d->m_state == WiFi::StateEnabling || d->m_state == WiFi::StateEnabled) {
-            return;
-        }
 
-        if(!d->tool->isRunning()) {
-            d->m_state = WiFi::StateDisabling;
-            d->tool->start();
-        } else {
-            d->tool->reassociate();
-            d->m_state = WiFi::StateEnabled;
-        }
-    } else {
-        if(d->m_state == WiFi::StateDisabling || d->m_state == WiFi::StateDisabled) {
-            return;
-        }
-
-        if(!d->tool->isRunning()) {
-            d->m_state = WiFi::StateDisabled;
-        } else {
-            d->tool->disconnect();
-            d->m_state = WiFi::StateDisabled;
-        }
-    }
-
-    emit wifiStateChanged();
+    d->m_proxy->setWiFiEnabled(enabled);
 }
 
 bool WiFiManager::is5GHzBandSupported() const
@@ -237,7 +91,7 @@ WiFiInfo WiFiManager::connectionInfo() const
 {
     Q_D(const WiFiManager);
 
-    return d->m_info;
+    return d->m_proxy->connectionInfo();
 }
 
 /*!
@@ -247,7 +101,7 @@ WiFiScanResultList WiFiManager::scanResults() const
 {
     Q_D(const WiFiManager);
 
-    return d->m_scanResults;
+    return d->m_proxy->scanResults();
 }
 
 /*!
@@ -257,7 +111,7 @@ WiFiNetworkList WiFiManager::networks() const
 {
     Q_D(const WiFiManager);
 
-    return d->m_networks;
+    return d->m_proxy->networks();
 }
 
 /*!
@@ -278,19 +132,10 @@ quint16 WiFiManager::CalculateSignalLevel(int rssi, quint16 numLevels)
     }
 }
 
-void WiFiManager::pingSupplicant()
+void WiFiManager::addNetwork(const WiFiNetwork &network)
 {
-
-}
-
-void WiFiManager::saveConfiguration()
-{
-
-}
-
-void WiFiManager::startScan()
-{
-
+    Q_D(WiFiManager);
+    return d->m_proxy->addNetwork(network);
 }
 
 #include "moc_wifimanager.cpp"

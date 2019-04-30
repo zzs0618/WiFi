@@ -19,6 +19,7 @@
 #include "wifisupplicantparser_p.h"
 
 #include <QtCore/qstring.h>
+#include <QDebug>
 
 WiFiSupplicantParser::WiFiSupplicantParser()
 {
@@ -42,7 +43,7 @@ WiFiSupplicantParser::WiFiSupplicantParser()
 WiFiInfo WiFiSupplicantParser::fromStatus(const QString &status) const
 {
     WiFiInfo info;
-    QStringList items = status.split(QStringLiteral("\\n"));
+    QStringList items = status.split(QRegExp(QStringLiteral("\\n")));
     for (int i = 0; i < items.size(); i++) {
         QString str = items.at(i);
         if (str.startsWith(QStringLiteral("address="))) {
@@ -96,7 +97,7 @@ WiFiScanResult WiFiSupplicantParser::fromBSS(const QString &bss) const
     QString bssid, ssid, flags;
     qint16 rssi = WiFi::MIN_RSSI;
     int frequency = 0;
-    QStringList items = bss.split(QStringLiteral("\\n"));
+    QStringList items = bss.split(QRegExp(QStringLiteral("\\n")));
     for (int i = 0; i < items.size(); i++) {
         QString str = items.at(i);
         if (str.startsWith(QStringLiteral("bssid="))) {
@@ -130,9 +131,9 @@ WiFiNetworkList WiFiSupplicantParser::fromListNetworks(const QString &networks)
 const
 {
     WiFiNetworkList list;
-    QStringList items = networks.split(QStringLiteral("\\n")).mid(1);
+    QStringList items = networks.split(QRegExp(QStringLiteral("\\n"))).mid(1);
     for (int i = 0; i < items.size(); i++) {
-        QStringList net = items.at(i).split(QStringLiteral("\\t"));
+        QStringList net = items.at(i).split(QRegExp(QStringLiteral("\\t")));
         if(net.length() > 3) {
             int id = net.at(0).toInt();
             QString ssid = net.at(1);

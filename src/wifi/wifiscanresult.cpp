@@ -437,5 +437,40 @@ WiFiScanResult WiFiScanResult::fromJson(const QByteArray &json)
     return WiFiScanResult::fromMap(doc.toVariant().toMap());
 }
 
+QVariantList WiFiScanResultList::toMapList() const
+{
+    QVariantList maps;
+    for(int i = 0; i < size(); ++i) {
+        maps << at(i).toMap();
+    }
+    return maps;
+}
+QByteArray WiFiScanResultList::toJson() const
+{
+    QJsonDocument doc = QJsonDocument::fromVariant(toMapList());
+    return doc.toJson(QJsonDocument::Compact);
+}
+
+WiFiScanResultList WiFiScanResultList::fromMapList(const QVariantList
+        &mapList)
+{
+    WiFiScanResultList list;
+    for(int i = 0; i < mapList.size(); ++i) {
+        list << WiFiScanResult::fromMap(mapList.at(i).toMap());
+    }
+    return list;
+}
+
+WiFiScanResultList WiFiScanResultList::fromJson(const QByteArray &json)
+{
+    QJsonParseError parseError;
+    QJsonDocument doc = QJsonDocument::fromJson(json, &parseError);
+    if (parseError.error) {
+        qCritical() << "WiFiScanResultList::fromJson. Error at:" << parseError.offset
+                    << parseError.errorString();
+        return WiFiScanResultList();
+    }
+    return WiFiScanResultList::fromMapList(doc.toVariant().toList());
+}
 
 QT_END_NAMESPACE

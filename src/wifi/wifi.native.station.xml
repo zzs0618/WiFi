@@ -1,0 +1,85 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+    "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+    <interface name="wifi.native.Station">
+        <property name="IsWiFiEnabled" type="b" access="read"/>
+        <property name="ConnectionInfo" type="s" access="read"/>
+        <property name="ScanResults" type="s" access="read"/>
+        <property name="Networks" type="s" access="read"/>
+
+        <method name="setWiFiEnabled" >
+            <arg name="enabled" type="b" direction="in"/>
+        </method>
+
+        <method name="AddNetwork" >
+            <!--
+            参数: network
+            摘要: 该参数表示 WIFI 网络列表单个元素的 JSON 格式数据
+            数据结构:
+                netId       WIFI 网络的网络 ID(如果为-1表示新增，大于-1表示修改网络)
+                ssid        WIFI 网络的 SSID
+                bssid       WIFI 网络的 BSSID
+                auths       WIFI 网络的认证方式
+                                NoneOpen        = 0x00
+                                NoneWEP         = 0x01
+                                NoneWEPShared   = 0x02
+                                IEEE8021X       = 0x04
+                                WPA_PSK         = 0x08
+                                WPA_EAP         = 0x10
+                                WPA2_PSK        = 0x20
+                                WPA2_EAP        = 0x40
+                encrs       WIFI 网络的加密方式
+                                None    = 0x00
+                                WEP     = 0x01
+                                TKIP    = 0x02
+                                CCMP    = 0x04
+                psk         WIFI 网络的预共享密钥
+            -->
+            <arg name="network" type="s" direction="in"/>
+        </method>
+        <method name="RemoveNetwork" >
+            <arg name="network" type="s" direction="in"/>
+        </method>
+
+        <signal name="WifiStateChanged">
+            <arg name="enabled" type="b" direction="out"/>
+        </signal>
+        <signal name="ConnectionInfoChanged">
+            <!--
+            参数: info
+            摘要: 该参数表示 WIFI 的状态的 JSON 格式数据
+            数据结构:
+                address     已连接WIFI的本地物理地址
+                ssid        已连接WIFI的 SSID
+                bssid       已连接WIFI的 BSSID
+                rssi        已连接WIFI的信号强度
+                freq        已连接WIFI的频率
+                ip          已连接WIFI的 IP 地址
+                netId       已连接WIFI的网络 ID
+                rxSpeed     已连接WIFI的接收链路速度值(以Mbps为单位)
+                txSpeed     已连接WIFI的传输链路速度(以Mbps为单位)。
+            -->
+            <arg name="info" type="s" direction="out"/>
+        </signal>
+        <signal name="ScanResultFound">
+            <!--
+            参数: bss
+            摘要: 该参数表示已添加 WIFI 访问点的 JSON 格式数据
+            数据结构:
+                bssid       访问点的 BSSID
+                ssid        访问点的 SSID
+                rssi        访问点的信号强度
+                freq        访问点的频率
+                flags       访问点的安全认证方式
+                netId       访问点的网络 ID
+            -->
+            <arg name="bss" type="s" direction="out"/>
+        </signal>
+        <signal name="ScanResultUpdated">
+            <arg name="bss" type="s" direction="out"/>
+        </signal>
+        <signal name="ScanResultLost">
+            <arg name="bss" type="s" direction="out"/>
+        </signal>
+    </interface>
+</node>

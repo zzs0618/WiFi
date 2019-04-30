@@ -69,6 +69,19 @@ WiFiNetwork::WiFiNetwork() :
 }
 
 /*!
+    构造一个 WiFiNetwork 对象，该对象具有 SSID 。
+*/
+WiFiNetwork::WiFiNetwork(const QString &ssid) :
+    d_ptr(new WiFiNetworkPrivate)
+{
+    Q_D(WiFiNetwork);
+
+    d->ssid = ssid;
+    d->valid = false;
+    d->cached = false;
+}
+
+/*!
     构造一个 WiFiNetwork 对象，该对象具有 Network Id 和 SSID 。
 */
 WiFiNetwork::WiFiNetwork(int id, const QString &ssid) :
@@ -78,7 +91,9 @@ WiFiNetwork::WiFiNetwork(int id, const QString &ssid) :
 
     d->networkId = id;
     d->ssid = ssid;
-    d->valid = true;
+    if(d->networkId >= 0) {
+        d->valid = true;
+    }
     d->cached = false;
 }
 
@@ -330,6 +345,42 @@ WiFiNetwork WiFiNetwork::fromJson(const QByteArray &json)
         return WiFiNetwork();
     }
     return WiFiNetwork::fromMap(doc.toVariant().toMap());
+}
+
+QVariantList WiFiNetworkList::toMapList() const
+{
+    QVariantList maps;
+    for(int i = 0; i < size(); ++i) {
+        maps << at(i).toMap();
+    }
+    return maps;
+}
+QByteArray WiFiNetworkList::toJson() const
+{
+    QJsonDocument doc = QJsonDocument::fromVariant(toMapList());
+    return doc.toJson(QJsonDocument::Compact);
+}
+
+WiFiNetworkList WiFiNetworkList::fromMapList(const QVariantList
+        &mapList)
+{
+    WiFiNetworkList list;
+    for(int i = 0; i < mapList.size(); ++i) {
+        list << WiFiNetwork::fromMap(mapList.at(i).toMap());
+    }
+    return list;
+}
+
+WiFiNetworkList WiFiNetworkList::fromJson(const QByteArray &json)
+{
+    QJsonParseError parseError;
+    QJsonDocument doc = QJsonDocument::fromJson(json, &parseError);
+    if (parseError.error) {
+        qCritical() << "WiFiScanResultList::fromJson. Error at:" << parseError.offset
+                    << parseError.errorString();
+        return WiFiNetworkList();
+    }
+    return WiFiNetworkList::fromMapList(doc.toVariant().toList());
 }
 
 

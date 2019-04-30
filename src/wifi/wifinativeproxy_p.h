@@ -16,33 +16,29 @@
  ** along with this program.  If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#ifndef WIFIMANAGER_H
-#define WIFIMANAGER_H
+#ifndef WIFINATIVEPROXY_P_H
+#define WIFINATIVEPROXY_P_H
 
-#include <WiFi/wifiglobal.h>
+#include <QtCore/qobject.h>
 #include <WiFi/wifi.h>
 #include <WiFi/wifiinfo.h>
 #include <WiFi/wifiscanresult.h>
 #include <WiFi/wifinetwork.h>
 
-class WiFiManagerPrivate;
-class WIFI_EXPORT WiFiManager : public QObject
+
+class WiFiNativeProxyPrivate;
+class WiFiNativeProxy : public QObject
 {
     Q_OBJECT
 public:
-    explicit WiFiManager(QObject *parent = nullptr);
+    explicit WiFiNativeProxy(QObject *parent = nullptr);
 
     bool isWiFiEnabled() const;
     void setWiFiEnabled(bool enabled);
 
-    bool is5GHzBandSupported() const;
-    bool isP2pSupported() const;
-
     WiFiInfo connectionInfo() const;
     WiFiScanResultList scanResults() const;
     WiFiNetworkList networks() const;
-
-    static quint16 CalculateSignalLevel(int rssi, quint16 numLevels);
 
 public slots:
     void addNetwork(const WiFiNetwork &network);
@@ -54,7 +50,7 @@ signals:
     void networksChanged();
 
 private:
-    Q_DECLARE_PRIVATE(WiFiManager)
+    Q_DECLARE_PRIVATE(WiFiNativeProxy)
 };
 
-#endif // WIFIMANAGER_H
+#endif // WIFINATIVEPROXY_P_H

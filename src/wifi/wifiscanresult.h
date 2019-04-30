@@ -87,7 +87,12 @@ private:
 
 class WiFiScanResultList : public QList<WiFiScanResult>
 {
+public:
+    QVariantList toMapList() const;
+    QByteArray toJson() const;
 
+    static WiFiScanResultList fromMapList(const QVariantList &mapList);
+    static WiFiScanResultList fromJson(const QByteArray &json);
 };
 
 QT_END_NAMESPACE

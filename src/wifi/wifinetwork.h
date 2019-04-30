@@ -31,6 +31,7 @@ class WIFI_EXPORT WiFiNetwork
 {
 public:
     WiFiNetwork();
+    WiFiNetwork(const QString &ssid);
     WiFiNetwork(int id, const QString &ssid);
     WiFiNetwork(const WiFiNetwork &other);
     ~WiFiNetwork();
@@ -75,7 +76,12 @@ private:
 
 class WiFiNetworkList : public QList<WiFiNetwork>
 {
+public:
+    QVariantList toMapList() const;
+    QByteArray toJson() const;
 
+    static WiFiNetworkList fromMapList(const QVariantList &mapList);
+    static WiFiNetworkList fromJson(const QByteArray &json);
 };
 
 QT_END_NAMESPACE

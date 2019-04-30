@@ -16,8 +16,8 @@
  ** along with this program.  If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#ifndef WIFIMANAGER_H
-#define WIFIMANAGER_H
+#ifndef WIFINATIVE_H
+#define WIFINATIVE_H
 
 #include <WiFi/wifiglobal.h>
 #include <WiFi/wifi.h>
@@ -25,15 +25,20 @@
 #include <WiFi/wifiscanresult.h>
 #include <WiFi/wifinetwork.h>
 
-class WiFiManagerPrivate;
-class WIFI_EXPORT WiFiManager : public QObject
+class WiFiNativePrivate;
+class WIFI_EXPORT WiFiNative : public QObject
 {
     Q_OBJECT
 public:
-    explicit WiFiManager(QObject *parent = nullptr);
+    explicit WiFiNative(QObject *parent = nullptr);
+
+    WiFi::State wifiState() const;
 
     bool isWiFiEnabled() const;
     void setWiFiEnabled(bool enabled);
+
+    bool isAutoScan() const;
+    void setAutoScan(bool enabled);
 
     bool is5GHzBandSupported() const;
     bool isP2pSupported() const;
@@ -45,16 +50,26 @@ public:
     static quint16 CalculateSignalLevel(int rssi, quint16 numLevels);
 
 public slots:
+    void pingSupplicant();
+    void saveConfiguration();
+    void startScan();
+
     void addNetwork(const WiFiNetwork &network);
 
 signals:
-    void isWiFiEnabledChanged();
+    void wifiStateChanged();
+    void isAutoScanChanged();
     void connectionInfoChanged();
-    void scanResultsChanged();
+    void scanResultFound(const WiFiScanResult &result);
+    void scanResultUpdated(const WiFiScanResult &result);
+    void scanResultLost(const WiFiScanResult &result);
     void networksChanged();
 
 private:
-    Q_DECLARE_PRIVATE(WiFiManager)
+    Q_DECLARE_PRIVATE(WiFiNative)
+
+    Q_PRIVATE_SLOT(d_func(), void _q_updateInfoTimeout())
+    Q_PRIVATE_SLOT(d_func(), void _q_autoScanTimeout())
 };
 
-#endif // WIFIMANAGER_H
+#endif // WIFINATIVE_H

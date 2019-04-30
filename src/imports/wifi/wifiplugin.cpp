@@ -16,24 +16,3 @@
  ** along with this program.  If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#ifndef WIFIMANAGER_P_H
-#define WIFIMANAGER_P_H
-
-#include "wifimanager.h"
-#include "wifinativeproxy_p.h"
-
-#include <private/qobject_p.h>
-
-Q_GLOBAL_STATIC(WiFiNativeProxy, wifiProxy)
-
-class WiFiManagerPrivate : public QObjectPrivate
-{
-    Q_DECLARE_PUBLIC(WiFiManager)
-public:
-    WiFiManagerPrivate();
-    ~WiFiManagerPrivate();
-
-    WiFiNativeProxy *m_proxy = wifiProxy;
-};
-
-#endif // WIFIMANAGER_P_H

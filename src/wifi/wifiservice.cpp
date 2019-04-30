@@ -16,24 +16,31 @@
  ** along with this program.  If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#ifndef WIFIMANAGER_P_H
-#define WIFIMANAGER_P_H
+#include "wifiservice.h"
+#include "wifinative.h"
+#include "wifinativestub_p.h"
 
-#include "wifimanager.h"
-#include "wifinativeproxy_p.h"
+#include "wifidbus_p.h"
+#include "station_adaptor.h"
+#include "peers_adaptor.h"
 
-#include <private/qobject_p.h>
 
-Q_GLOBAL_STATIC(WiFiNativeProxy, wifiProxy)
-
-class WiFiManagerPrivate : public QObjectPrivate
+WiFiService::WiFiService(QObject *parent) : QThread(parent)
 {
-    Q_DECLARE_PUBLIC(WiFiManager)
-public:
-    WiFiManagerPrivate();
-    ~WiFiManagerPrivate();
 
-    WiFiNativeProxy *m_proxy = wifiProxy;
-};
+}
 
-#endif // WIFIMANAGER_P_H
+void WiFiService::run()
+{
+    WiFiNative *native = new WiFiNative;
+    WiFiNativeStub *station = new WiFiNativeStub(native);
+    //    WifiDbusPeersStub *peers = new WifiDbusPeersStub(wpa);
+
+    new StationAdaptor(station);
+    //    new PeersAdaptor(peers);
+    WiFiDBus::connection().registerObject(WiFiDBus::stationPath, station);
+    //    connection.registerObject(WiFiDBus::peersPath, peers);
+    WiFiDBus::connection().registerService(WiFiDBus::serviceName);
+
+    QThread::exec();
+}

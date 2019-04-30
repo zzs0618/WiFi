@@ -1,0 +1,29 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+    "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+    <interface name="wifi.native.Peers">
+        <method name="Start" />
+        <method name="Stop" />
+        <method name="Connect">
+            <!--
+            参数：param
+            摘要：该参数表示 P2P 连接参数的 JSON 格式数据
+            数据结构：
+                method      P2P 连接的方法（如：PBC、PIN等）
+                address     P2P 连接的MAC地址
+            -->
+            <arg name="param" type="s" direction="in"/>
+        </method>
+        <signal name="DeviceFound">
+            <!--
+            参数：device
+            摘要：该参数表示 Devcie 信息的 JSON 格式数据
+            数据结构：
+                name        已发现Devcie的名称
+                address     已发现Devcie的MAC地址
+                type        已发现Devcie的类型
+            -->
+            <arg name="device" type="s" direction="out"/>
+        </signal>
+    </interface>
+</node>

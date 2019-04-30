@@ -26,7 +26,7 @@ extern "C"
 }
 
 // in one source file
-Q_LOGGING_CATEGORY(logWPA, "wifi.wpa.tool")
+Q_LOGGING_CATEGORY(logWPA, "wifi.wpa.tool", QtWarningMsg)
 
 QT_BEGIN_NAMESPACE
 
@@ -152,6 +152,7 @@ void WiFiSupplicantToolPrivate::_q_tryOpenTimeout()
 
     if(m_wpaProcess->state() == QProcess::Running) {
         if(wpaOpenConnection()) {
+            qCDebug(logWPA, "[ SUCCESS ] Start wpa_supplicant.");
             Q_EMIT q->supplicantStarted();
         }
     }
@@ -173,8 +174,25 @@ void WiFiSupplicantToolPrivate::wpaProcessMsg(char *msg)
             pos = msg;
         }
     }
-    qCDebug(logWPA, "[ DEBUG ] WPA EVENT MSG<%d> :\n%s", priority, pos);
-    Q_EMIT q_func()->messageReceived(QString::fromLocal8Bit(pos));
+    QString message = QString::fromLocal8Bit(pos);
+    qCDebug(logWPA, "[ DEBUG ] WPA EVENT MSG<%d> : %s", priority,
+            qUtf8Printable(message));
+
+    if(message.startsWith(QStringLiteral(WPA_EVENT_CONNECTED))) {
+        QProcess::execute(QString::fromLocal8Bit(WIFI_WPA_ACTION_DHCPC),
+                          QStringList() << m_interface << QStringLiteral("CONNECTED"));
+    } else if(message.startsWith(QStringLiteral(WPA_EVENT_DISCONNECTED))) {
+        QProcess::execute(QString::fromLocal8Bit(WIFI_WPA_ACTION_DHCPC),
+                          QStringList() << m_interface << QStringLiteral("DISCONNECTED"));
+    } else if(message.startsWith(QStringLiteral(P2P_EVENT_GROUP_STARTED))) {
+        QProcess::execute(QString::fromLocal8Bit(WIFI_WPA_ACTION_DHCPD),
+                          QStringList() << m_interface << message);
+    } else if(message.startsWith(QStringLiteral(P2P_EVENT_GROUP_REMOVED))) {
+        QProcess::execute(QString::fromLocal8Bit(WIFI_WPA_ACTION_DHCPD),
+                          QStringList() << m_interface << message);
+    }
+
+    Q_EMIT q_func()->messageReceived(message);
 }
 
 void WiFiSupplicantToolPrivate::wpaMonitorMsg()
@@ -199,23 +217,20 @@ bool WiFiSupplicantToolPrivate::wpaOpenConnection()
 
     ctrl_conn = wpa_ctrl_open(qPrintable(m_interfacePath));
     if (ctrl_conn == NULL) {
-        qCCritical(logWPA, "[ ERROR ] Failed to Open WPA Connection\n%s",
-                   qPrintable(m_interfacePath));
+        qCCritical(logWPA, "[ ERROR ] Failed to Open WPA Connection.");
         return false;
     }
 
     monitor_conn = wpa_ctrl_open(qPrintable(m_interfacePath));
     if (monitor_conn == NULL) {
-        qCCritical(logWPA, "[ ERROR ] Failed to Open WPA Monitor\n%s",
-                   qPrintable(m_interfacePath));
+        qCCritical(logWPA, "[ ERROR ] Failed to Open WPA Monitor.");
         wpa_ctrl_close(ctrl_conn);
         ctrl_conn = NULL;
         return false;
     }
 
     if (wpa_ctrl_attach(monitor_conn)) {
-        qCCritical(logWPA, "[ ERROR ] Failed to Attach WPA Connection\n%s",
-                   qPrintable(m_interfacePath));
+        qCCritical(logWPA, "[ ERROR ] Failed to Attach WPA Connection.");
         wpa_ctrl_close(monitor_conn);
         monitor_conn = NULL;
         wpa_ctrl_close(ctrl_conn);
@@ -407,19 +422,14 @@ QString WiFiSupplicantTool::set_network(int id, const QString &variable,
                                         const QVariant &value) const
 {
     Q_D(const WiFiSupplicantTool);
+    static QString has_quotes = QStringLiteral("ssid,psk");
     QString command = QStringLiteral("SET_NETWORK %1 %2");
     QString param = QStringLiteral("%1 %2");
     param = param.arg(variable);
-    switch (value.type()) {
-        case QVariant::Double:
-        case QVariant::UInt:
-        case QVariant::ULongLong:
-        case QVariant::Int:
-            param = param.arg(value.toString());
-            break;
-        default:
-            param = param.arg(QLatin1String("\"") + value.toString() + QLatin1String("\""));
-            break;
+    if(has_quotes.contains(variable)) {
+        param = param.arg(QLatin1String("\"") + value.toString() + QLatin1String("\""));
+    } else {
+        param = param.arg(value.toString());
     }
     command = command.arg(id).arg(param);
     return d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"

@@ -16,24 +16,20 @@
  ** along with this program.  If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#ifndef WIFIMANAGER_P_H
-#define WIFIMANAGER_P_H
+#ifndef WIFISERVICE_H
+#define WIFISERVICE_H
 
-#include "wifimanager.h"
-#include "wifinativeproxy_p.h"
+#include <WiFi/wifiglobal.h>
+#include <QtCore/qthread.h>
 
-#include <private/qobject_p.h>
-
-Q_GLOBAL_STATIC(WiFiNativeProxy, wifiProxy)
-
-class WiFiManagerPrivate : public QObjectPrivate
+class WIFI_EXPORT WiFiService : public QThread
 {
-    Q_DECLARE_PUBLIC(WiFiManager)
+    Q_OBJECT
 public:
-    WiFiManagerPrivate();
-    ~WiFiManagerPrivate();
+    explicit WiFiService(QObject *parent = nullptr);
 
-    WiFiNativeProxy *m_proxy = wifiProxy;
+public slots:
+    virtual void run() Q_DECL_OVERRIDE;
 };
 
-#endif // WIFIMANAGER_P_H
+#endif // WIFISERVICE_H
