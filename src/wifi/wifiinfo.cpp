@@ -254,7 +254,7 @@ void WiFiInfo::setNetworkId(int id)
 /*!
   返回当前接收链路速度(以Mbps为单位)。
   */
-int WiFiInfo::rxLinkSpeedMbps() const
+int WiFiInfo::rxLinkSpeed() const
 {
     Q_D(const WiFiInfo);
     return d->rxLinkSpeedMbps;
@@ -263,7 +263,7 @@ int WiFiInfo::rxLinkSpeedMbps() const
 /*!
   设置 \a speed 接收链路速度值(以Mbps为单位)，内部使用。
   */
-void WiFiInfo::setRxLinkSpeedMbps(int speed)
+void WiFiInfo::setRxLinkSpeed(int speed)
 {
     Q_D(WiFiInfo);
     d->rxLinkSpeedMbps = speed;
@@ -272,7 +272,7 @@ void WiFiInfo::setRxLinkSpeedMbps(int speed)
 /*!
   返回当前传输链路速度(以Mbps为单位)。
   */
-int WiFiInfo::txLinkSpeedMbps() const
+int WiFiInfo::txLinkSpeed() const
 {
     Q_D(const WiFiInfo);
     return d->txLinkSpeedMbps;
@@ -281,7 +281,7 @@ int WiFiInfo::txLinkSpeedMbps() const
 /*!
   设置 \a speed 传输链路速度值(以Mbps为单位)，内部使用。
   */
-void WiFiInfo::setTxLinkSpeedMbps(int speed)
+void WiFiInfo::setTxLinkSpeed(int speed)
 {
     Q_D(WiFiInfo);
     d->txLinkSpeedMbps = speed;
@@ -313,15 +313,15 @@ QVariantMap WiFiInfo::toMap() const
 {
     Q_D(const WiFiInfo);
     QVariantMap map;
-    map[QLatin1String("address")] = d->address.toString();
+    map[QLatin1String("macAddress")] = d->address.toString();
     map[QLatin1String("bssid")] = d->bssid.toString();
     map[QLatin1String("ssid")] = d->ssid;
     map[QLatin1String("rssi")] = d->rssi;
-    map[QLatin1String("freq")] = d->frequency;
-    map[QLatin1String("ip")] = d->ipAddress;
-    map[QLatin1String("netId")] = d->networkId;
-    map[QLatin1String("rxSpeed")] = d->rxLinkSpeedMbps;
-    map[QLatin1String("txSpeed")] = d->txLinkSpeedMbps;
+    map[QLatin1String("frequency")] = d->frequency;
+    map[QLatin1String("ipAddress")] = d->ipAddress;
+    map[QLatin1String("networkId")] = d->networkId;
+    map[QLatin1String("rxLinkSpeed")] = d->rxLinkSpeedMbps;
+    map[QLatin1String("txLinkSpeed")] = d->txLinkSpeedMbps;
     return map;
 }
 
@@ -338,15 +338,15 @@ WiFiInfo WiFiInfo::fromMap(const QVariantMap &map)
         return WiFiInfo();
     }
     WiFiInfo info;
-    info.setMacAddress(WiFiMacAddress(map[QLatin1String("address")].toString()));
+    info.setMacAddress(WiFiMacAddress(map[QLatin1String("macAddress")].toString()));
     info.setBSSID(WiFiMacAddress(map[QLatin1String("bssid")].toString()));
     info.setSSID(map[QLatin1String("ssid")].toString());
     info.setRssi(map[QLatin1String("rssi")].toInt());
-    info.setFrequency(map[QLatin1String("freq")].toInt());
-    info.setIpAddress(map[QLatin1String("ip")].toString());
-    info.setNetworkId(map[QLatin1String("netId")].toInt());
-    info.setRxLinkSpeedMbps(map[QLatin1String("rxSpeed")].toInt());
-    info.setTxLinkSpeedMbps(map[QLatin1String("txSpeed")].toInt());
+    info.setFrequency(map[QLatin1String("frequency")].toInt());
+    info.setIpAddress(map[QLatin1String("ipAddress")].toString());
+    info.setNetworkId(map[QLatin1String("networkId")].toInt());
+    info.setRxLinkSpeed(map[QLatin1String("rxLinkSpeed")].toInt());
+    info.setTxLinkSpeed(map[QLatin1String("txLinkSpeed")].toInt());
     return info;
 }
 

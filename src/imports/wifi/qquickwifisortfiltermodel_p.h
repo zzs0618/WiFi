@@ -19,6 +19,7 @@
 #ifndef QQUICKWIFISORTFILTERMODEL_P_H
 #define QQUICKWIFISORTFILTERMODEL_P_H
 
+#include <QtQml/qqml.h>
 #include <QtCore/qsortfilterproxymodel.h>
 #include <QtQml/qqmlparserstatus.h>
 #include <QtQml/qjsvalue.h>
@@ -96,5 +97,7 @@ private:
     QByteArray m_sortRole;
     QByteArray m_filterRole;
 };
+
+QML_DECLARE_TYPE(QT_PREPEND_NAMESPACE(QQuickWiFiSortFilterModel))
 
 #endif // QQUICKWIFISORTFILTERMODEL_P_H

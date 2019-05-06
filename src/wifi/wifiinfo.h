@@ -57,11 +57,11 @@ public:
     int networkId() const;
     void setNetworkId(int id);
 
-    int rxLinkSpeedMbps() const;
-    void setRxLinkSpeedMbps(int speed);
+    int rxLinkSpeed() const;
+    void setRxLinkSpeed(int speed);
 
-    int txLinkSpeedMbps() const;
-    void setTxLinkSpeedMbps(int speed);
+    int txLinkSpeed() const;
+    void setTxLinkSpeed(int speed);
 
     QString toString() const;
     QVariantMap toMap() const;

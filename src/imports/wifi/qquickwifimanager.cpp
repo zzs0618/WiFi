@@ -71,6 +71,16 @@ void QQuickWiFiManager::addNetwork(const QString &ssid, const QString &password)
     m_manager->addNetwork(net);
 }
 
+void QQuickWiFiManager::classBegin()
+{
+
+}
+
+void QQuickWiFiManager::componentComplete()
+{
+    m_componentCompleted = true;
+}
+
 void QQuickWiFiManager::onConnectionInfoChanged()
 {
     WiFiInfo info = m_manager->connectionInfo();

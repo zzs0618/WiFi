@@ -297,12 +297,12 @@ QVariantMap WiFiNetwork::toMap() const
     Q_D(const WiFiNetwork);
     QVariantMap map;
 
-    map[QLatin1String("netId")] = d->networkId;
+    map[QLatin1String("networkId")] = d->networkId;
     map[QLatin1String("ssid")] = d->ssid;
     map[QLatin1String("bssid")] = d->bssid.toString();
-    map[QLatin1String("auths")] = static_cast<int>(d->authFlags);
-    map[QLatin1String("encrs")] = static_cast<int>(d->encrFlags);
-    map[QLatin1String("psk")] = d->preSharedKey;
+    map[QLatin1String("authFlags")] = static_cast<int>(d->authFlags);
+    map[QLatin1String("encrFlags")] = static_cast<int>(d->encrFlags);
+    map[QLatin1String("preSharedKey")] = d->preSharedKey;
 
     return map;
 }
@@ -315,7 +315,7 @@ QByteArray WiFiNetwork::toJson() const
 
 WiFiNetwork WiFiNetwork::fromMap(const QVariantMap &map)
 {
-    int id = map[QLatin1String("netId")].toInt();
+    int id = map[QLatin1String("networkId")].toInt();
     if(id < 0) {
         qCritical() << "WiFiNetwork::fromMap. Error at: id is invalid." ;
         return WiFiNetwork();
@@ -326,11 +326,11 @@ WiFiNetwork WiFiNetwork::fromMap(const QVariantMap &map)
     QString bssid = map[QLatin1String("bssid")].toString();
     info.setBSSID(WiFiMacAddress(bssid));
 
-    int auths = map[QLatin1String("auths")].toInt();
-    int encrs = map[QLatin1String("encrs")].toInt();
+    int auths = map[QLatin1String("authFlags")].toInt();
+    int encrs = map[QLatin1String("encrFlags")].toInt();
     info.setAuthFlags(static_cast<WiFi::AuthFlags>(auths));
     info.setEncrFlags(static_cast<WiFi::EncrytionFlags>(encrs));
-    info.setPreSharedKey(map[QLatin1String("psk")].toString());
+    info.setPreSharedKey(map[QLatin1String("preSharedKey")].toString());
 
     return info;
 }

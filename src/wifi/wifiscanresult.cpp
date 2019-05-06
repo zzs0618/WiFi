@@ -386,12 +386,12 @@ QVariantMap WiFiScanResult::toMap() const
     map[QLatin1String("bssid")] = d->bssid.toString();
     map[QLatin1String("ssid")] = d->ssid;
     map[QLatin1String("rssi")] = d->rssi;
-    map[QLatin1String("freq")] = d->frequency;
+    map[QLatin1String("frequency")] = d->frequency;
     map[QLatin1String("flags")] = d->flags;
     //    map[QLatin1String("auths")] = static_cast<int>(d->authFlags);
     //    map[QLatin1String("encrs")] = static_cast<int>(d->encrFlags);
     map[QLatin1String("timestamp")] = d->timestamp;
-    map[QLatin1String("netId")] = d->networkId;
+    map[QLatin1String("networkId")] = d->networkId;
 
     return map;
 }
@@ -413,14 +413,14 @@ WiFiScanResult WiFiScanResult::fromMap(const QVariantMap &map)
     QString ssid = map[QLatin1String("ssid")].toString();
     WiFiScanResult info(bssid, ssid);
     info.setRssi(map[QLatin1String("rssi")].toInt());
-    info.setFrequency(map[QLatin1String("freq")].toInt());
+    info.setFrequency(map[QLatin1String("frequency")].toInt());
     info.setFlags(map[QLatin1String("flags")].toString());
     //    int auths = map[QLatin1String("auths")].toInt();
     //    int encrs = map[QLatin1String("encrs")].toInt();
     //    info.setAuthFlags(static_cast<WiFi::AuthFlags>(auths));
     //    info.setEncrFlags(static_cast<WiFi::EncrytionFlags>(encrs));
     info.setTimestamp(map[QLatin1String("timestamp")].toLongLong());
-    info.setNetworkId(map[QLatin1String("netId")].toInt());
+    info.setNetworkId(map[QLatin1String("networkId")].toInt());
 
     return info;
 }

@@ -29,6 +29,11 @@ public:
     WiFiNativeStubPrivate();
     ~WiFiNativeStubPrivate();
 
+    void onConnectionInfoChanged();
+    void onScanResultFound(const WiFiScanResult &result);
+    void onScanResultUpdated(const WiFiScanResult &result);
+    void onScanResultLost(const WiFiScanResult &result);
+
 public:
     WiFiNative *m_native = NULL;
 };
@@ -41,11 +46,47 @@ WiFiNativeStubPrivate::~WiFiNativeStubPrivate()
 {
 }
 
+void WiFiNativeStubPrivate::onConnectionInfoChanged()
+{
+    Q_Q(WiFiNativeStub);
+
+    const QByteArray &json = m_native->connectionInfo().toJson();
+    Q_EMIT q->ConnectionInfoChanged(QString::fromUtf8(json));
+}
+
+void WiFiNativeStubPrivate::onScanResultFound(const WiFiScanResult &result)
+{
+    Q_Q(WiFiNativeStub);
+    const QByteArray &json = result.toJson();
+    Q_EMIT q->ScanResultFound(QString::fromUtf8(json));
+}
+void WiFiNativeStubPrivate::onScanResultUpdated(const WiFiScanResult &result)
+{
+    Q_Q(WiFiNativeStub);
+    const QByteArray &json = result.toJson();
+    Q_EMIT q->ScanResultUpdated(QString::fromUtf8(json));
+}
+void WiFiNativeStubPrivate::onScanResultLost(const WiFiScanResult &result)
+{
+    Q_Q(WiFiNativeStub);
+    const QByteArray &json = result.toJson();
+    Q_EMIT q->ScanResultLost(QString::fromUtf8(json));
+}
+
 WiFiNativeStub::WiFiNativeStub(WiFiNative *native)
     : QObject(*(new WiFiNativeStubPrivate), native)
 {
     Q_D(WiFiNativeStub);
     d->m_native = native;
+
+    QObjectPrivate::connect(d->m_native, &WiFiNative::connectionInfoChanged,
+                            d, &WiFiNativeStubPrivate::onConnectionInfoChanged);
+    QObjectPrivate::connect(d->m_native, &WiFiNative::scanResultFound,
+                            d, &WiFiNativeStubPrivate::onScanResultFound);
+    QObjectPrivate::connect(d->m_native, &WiFiNative::scanResultUpdated,
+                            d, &WiFiNativeStubPrivate::onScanResultUpdated);
+    QObjectPrivate::connect(d->m_native, &WiFiNative::scanResultLost,
+                            d, &WiFiNativeStubPrivate::onScanResultLost);
 }
 
 QString WiFiNativeStub::connectionInfo() const

@@ -19,6 +19,7 @@
 #ifndef QQUICKWIFIMANAGER_P_H
 #define QQUICKWIFIMANAGER_P_H
 
+#include <QtQml/qqml.h>
 #include <QtQml/qqmlparserstatus.h>
 #include <WiFi/wifimanager.h>
 
@@ -75,5 +76,7 @@ private:
     int m_frequency = 0;
     QString m_ipAddress;
 };
+
+QML_DECLARE_TYPE(QT_PREPEND_NAMESPACE(QQuickWiFiManager))
 
 #endif // QQUICKWIFIMANAGER_P_H

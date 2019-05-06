@@ -115,8 +115,6 @@ void WiFiNativeProxyPrivate::onWifiStateChanged(bool enabled)
 
 void WiFiNativeProxyPrivate::onServiceRegistered(const QString &service)
 {
-    Q_Q(WiFiNativeProxy);
-
     qDebug() << Q_FUNC_INFO << service;
     processServiced(true);
     //    q->setWiFiEnabled(true);
@@ -124,8 +122,6 @@ void WiFiNativeProxyPrivate::onServiceRegistered(const QString &service)
 
 void WiFiNativeProxyPrivate::onServiceUnregistered(const QString &service)
 {
-    Q_Q(WiFiNativeProxy);
-
     qDebug() << Q_FUNC_INFO << service;
     processServiced(false);
 }

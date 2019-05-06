@@ -124,7 +124,6 @@ QObject *QQuickWiFiSortFilterModel::source() const
 
 void QQuickWiFiSortFilterModel::setSource(QObject *source)
 {
-    Q_D(QQuickWiFiSortFilterModel);
     setSourceModel(qobject_cast<QAbstractItemModel *>(source));
 }
 
@@ -273,8 +272,6 @@ bool QQuickWiFiSortFilterModel::filterAcceptsRow(int sourceRow,
 bool QQuickWiFiSortFilterModel::lessThan(const QModelIndex &source_left,
         const QModelIndex &source_right) const
 {
-    Q_D(const QQuickWiFiSortFilterModel);
-
     QList<QByteArray> sortRoles = m_sortRole.split(',');
 
     if(sortRoles.isEmpty()) {

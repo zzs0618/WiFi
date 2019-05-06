@@ -1,3 +1,4 @@
 module WiFi
 plugin quick_wifi
 classname QQuickWiFiPlugin
+typeinfo plugins.qmltypes
