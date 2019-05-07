@@ -53,14 +53,25 @@ WiFiManager::WiFiManager(QObject * parent)
 {
     Q_D(WiFiManager);
 
+    connect(d->m_proxy, SIGNAL(isWiFiServicedChanged()), this,
+            SIGNAL(isWiFiServicedChanged()));
     connect(d->m_proxy, SIGNAL(isWiFiEnabledChanged()), this,
             SIGNAL(isWiFiEnabledChanged()));
+    connect(d->m_proxy, SIGNAL(isWiFiAutoScanChanged()), this,
+            SIGNAL(isWiFiAutoScanChanged()));
     connect(d->m_proxy, SIGNAL(connectionInfoChanged()), this,
             SIGNAL(connectionInfoChanged()));
     connect(d->m_proxy, SIGNAL(scanResultsChanged()), this,
             SIGNAL(scanResultsChanged()));
     connect(d->m_proxy, SIGNAL(networksChanged()), this, SIGNAL(networksChanged()));
 }
+
+bool WiFiManager::isWiFiServiced() const
+{
+    Q_D(const WiFiManager);
+    return d->m_proxy->isWiFiServiced();
+}
+
 
 bool WiFiManager::isWiFiEnabled() const
 {
@@ -74,6 +85,20 @@ void WiFiManager::setWiFiEnabled(bool enabled)
 
     d->m_proxy->setWiFiEnabled(enabled);
 }
+
+bool WiFiManager::isWiFiAutoScan() const
+{
+    Q_D(const WiFiManager);
+    return d->m_proxy->isWiFiAutoScan();
+}
+
+void WiFiManager::setWiFiAutoScan(bool autoScan)
+{
+    Q_D(WiFiManager);
+
+    d->m_proxy->setWiFiAutoScan(autoScan);
+}
+
 
 bool WiFiManager::is5GHzBandSupported() const
 {

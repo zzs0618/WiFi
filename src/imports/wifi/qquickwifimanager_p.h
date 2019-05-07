@@ -27,8 +27,11 @@ class QQuickWiFiManager : public QObject, public QQmlParserStatus
 {
     Q_OBJECT
     Q_INTERFACES(QQmlParserStatus)
+    Q_PROPERTY(bool isWiFiServiced READ isWiFiServiced NOTIFY isWiFiServicedChanged)
     Q_PROPERTY(bool isWiFiEnabled READ isWiFiEnabled WRITE setWiFiEnabled NOTIFY
                isWiFiEnabledChanged)
+    Q_PROPERTY(bool isWiFiAutoScan READ isWiFiAutoScan WRITE setWiFiAutoScan
+               NOTIFY isWiFiAutoScanChanged)
     Q_PROPERTY(QString macAddress READ macAddress NOTIFY macAddressChanged)
     Q_PROPERTY(QString bssid READ bssid NOTIFY bssidChanged)
     Q_PROPERTY(QString ssid READ ssid NOTIFY ssidChanged)
@@ -38,8 +41,13 @@ class QQuickWiFiManager : public QObject, public QQmlParserStatus
 public:
     explicit QQuickWiFiManager(QObject *parent = nullptr);
 
+    bool isWiFiServiced() const;
+
     bool isWiFiEnabled() const;
     void setWiFiEnabled(bool enabled);
+
+    bool isWiFiAutoScan() const;
+    void setWiFiAutoScan(bool autoScan);
 
     QString macAddress() const;
     QString bssid() const;
@@ -55,7 +63,9 @@ public:
     void componentComplete() Q_DECL_OVERRIDE;
 
 signals:
+    void isWiFiServicedChanged();
     void isWiFiEnabledChanged();
+    void isWiFiAutoScanChanged();
     void macAddressChanged();
     void bssidChanged();
     void ssidChanged();

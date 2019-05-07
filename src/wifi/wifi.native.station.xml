@@ -3,12 +3,17 @@
 <node>
     <interface name="wifi.native.Station">
         <property name="IsWiFiEnabled" type="b" access="read"/>
+        <property name="IsWiFiAutoScan" type="b" access="read"/>
         <property name="ConnectionInfo" type="s" access="read"/>
         <property name="ScanResults" type="s" access="read"/>
         <property name="Networks" type="s" access="read"/>
 
-        <method name="setWiFiEnabled" >
+        <method name="SetWiFiEnabled" >
             <arg name="enabled" type="b" direction="in"/>
+        </method>
+
+        <method name="SetWiFiAutoScan" >
+            <arg name="autoScan" type="b" direction="in"/>
         </method>
 
         <method name="AddNetwork" >
@@ -43,6 +48,9 @@
 
         <signal name="WifiStateChanged">
             <arg name="enabled" type="b" direction="out"/>
+        </signal>
+        <signal name="WiFiAutoScanChanged">
+            <arg name="autoScan" type="b" direction="out"/>
         </signal>
         <signal name="ConnectionInfoChanged">
             <!--

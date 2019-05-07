@@ -46,8 +46,17 @@ QVariant QQuickWiFiScanResultModel::data(const QModelIndex &index,
         return QVariant();
     }
 
-    QVariantMap ap = m_manager->scanResults().value(index.row()).toMap();
-    return ap.value(roleNames().value(role));
+    QVariantMap scanResult = m_manager->scanResults().value(index.row()).toMap();
+    QVariant value;
+    switch (role) {
+        case Qt::DisplayRole + 7:
+            value = WiFiManager::CalculateSignalLevel(scanResult["rssi"].toInt(), 4);
+            break;
+        default:
+            value = scanResult.value(roleNames().value(role));
+            break;
+    }
+    return value;
 }
 
 QHash<int, QByteArray> QQuickWiFiScanResultModel::roleNames() const
@@ -58,7 +67,8 @@ QHash<int, QByteArray> QQuickWiFiScanResultModel::roleNames() const
         {Qt::DisplayRole + 3, "rssi"},
         {Qt::DisplayRole + 4, "frequency"},
         {Qt::DisplayRole + 5, "flags"},
-        {Qt::DisplayRole + 6, "networkId"}
+        {Qt::DisplayRole + 6, "networkId"},
+        {Qt::DisplayRole + 7, "signalLevel"}
     };
 
     return roles;

@@ -33,8 +33,13 @@ class WiFiNativeProxy : public QObject
 public:
     explicit WiFiNativeProxy(QObject *parent = nullptr);
 
+    bool isWiFiServiced() const;
+
     bool isWiFiEnabled() const;
     void setWiFiEnabled(bool enabled);
+
+    bool isWiFiAutoScan() const;
+    void setWiFiAutoScan(bool autoScan);
 
     WiFiInfo connectionInfo() const;
     WiFiScanResultList scanResults() const;
@@ -44,7 +49,9 @@ public slots:
     void addNetwork(const WiFiNetwork &network);
 
 signals:
+    void isWiFiServicedChanged();
     void isWiFiEnabledChanged();
+    void isWiFiAutoScanChanged();
     void connectionInfoChanged();
     void scanResultsChanged();
     void networksChanged();

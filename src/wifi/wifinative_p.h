@@ -50,7 +50,7 @@ public:
     QTimer *timer_Scan = NULL;
 
     WiFi::State m_state = WiFi::StateDisabled;
-    bool m_isAutoScan = true;
+    bool m_isAutoScan = false;
     WiFiInfo m_info;
     WiFiScanResultList m_scanResults;
     WiFiNetworkList m_networks;

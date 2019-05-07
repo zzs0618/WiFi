@@ -32,8 +32,13 @@ class WIFI_EXPORT WiFiManager : public QObject
 public:
     explicit WiFiManager(QObject *parent = nullptr);
 
+    bool isWiFiServiced() const;
+
     bool isWiFiEnabled() const;
     void setWiFiEnabled(bool enabled);
+
+    bool isWiFiAutoScan() const;
+    void setWiFiAutoScan(bool autoScan);
 
     bool is5GHzBandSupported() const;
     bool isP2pSupported() const;
@@ -48,7 +53,9 @@ public slots:
     void addNetwork(const WiFiNetwork &network);
 
 signals:
+    void isWiFiServicedChanged();
     void isWiFiEnabledChanged();
+    void isWiFiAutoScanChanged();
     void connectionInfoChanged();
     void scanResultsChanged();
     void networksChanged();

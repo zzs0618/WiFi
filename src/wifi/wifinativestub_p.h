@@ -32,9 +32,13 @@ class WiFiNativeStub : public QObject
 public:
     explicit WiFiNativeStub(WiFiNative *native);
 
+
 public: // PROPERTIES
     Q_PROPERTY(QString ConnectionInfo READ connectionInfo)
     QString connectionInfo() const;
+
+    Q_PROPERTY(bool IsWiFiAutoScan READ isWiFiAutoScan)
+    bool isWiFiAutoScan() const;
 
     Q_PROPERTY(bool IsWiFiEnabled READ isWiFiEnabled)
     bool isWiFiEnabled() const;
@@ -48,13 +52,15 @@ public: // PROPERTIES
 public Q_SLOTS: // METHODS
     void AddNetwork(const QString &network);
     void RemoveNetwork(const QString &network);
-    void setWiFiEnabled(bool enabled);
+    void SetWiFiAutoScan(bool autoScan);
+    void SetWiFiEnabled(bool enabled);
 Q_SIGNALS: // SIGNALS
     void ConnectionInfoChanged(const QString &info);
     void ScanResultFound(const QString &bss);
     void ScanResultLost(const QString &bss);
     void ScanResultUpdated(const QString &bss);
     void WifiStateChanged(bool enabled);
+    void WiFiAutoScanChanged(bool autoScan);
 
 private:
     Q_DECLARE_PRIVATE(WiFiNativeStub)

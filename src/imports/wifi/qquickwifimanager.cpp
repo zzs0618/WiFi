@@ -23,10 +23,17 @@ QQuickWiFiManager::QQuickWiFiManager(QObject *parent)
     : QObject(parent)
     , m_manager(new WiFiManager(this))
 {
+    connect(m_manager, SIGNAL(isWiFiServicedChanged()),
+            SIGNAL(isWiFiServicedChanged()));
     connect(m_manager, SIGNAL(isWiFiEnabledChanged()),
             SIGNAL(isWiFiEnabledChanged()));
     connect(m_manager, SIGNAL(connectionInfoChanged()),
             SLOT(onConnectionInfoChanged()));
+}
+
+bool QQuickWiFiManager::isWiFiServiced() const
+{
+    return m_manager->isWiFiServiced();
 }
 
 bool QQuickWiFiManager::isWiFiEnabled() const
@@ -35,8 +42,26 @@ bool QQuickWiFiManager::isWiFiEnabled() const
 }
 void QQuickWiFiManager::setWiFiEnabled(bool enabled)
 {
+    if(!m_componentCompleted) {
+        return;
+    }
+
     m_manager->setWiFiEnabled(enabled);
 }
+
+bool QQuickWiFiManager::isWiFiAutoScan() const
+{
+    return m_manager->isWiFiAutoScan();
+}
+void QQuickWiFiManager::setWiFiAutoScan(bool autoScan)
+{
+    if(!m_componentCompleted) {
+        return;
+    }
+
+    m_manager->setWiFiAutoScan(autoScan);
+}
+
 
 QString QQuickWiFiManager::macAddress() const
 {
@@ -65,6 +90,10 @@ QString QQuickWiFiManager::ipAddress() const
 
 void QQuickWiFiManager::addNetwork(const QString &ssid, const QString &password)
 {
+    if(!m_componentCompleted) {
+        return;
+    }
+
     WiFiNetwork net(-1, ssid);
     net.setAuthFlags(WiFi::WPA2_PSK);
     net.setPreSharedKey(password);

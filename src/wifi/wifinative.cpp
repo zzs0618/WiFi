@@ -300,7 +300,7 @@ WiFi::State WiFiNative::wifiState() const
 bool WiFiNative::isWiFiEnabled() const
 {
     Q_D(const WiFiNative);
-    return d->m_state != WiFi::StateEnabled;
+    return d->m_state == WiFi::StateEnabled;
 }
 
 void WiFiNative::setWiFiEnabled(bool enabled)
@@ -348,6 +348,10 @@ void WiFiNative::setAutoScan(bool enabled)
     }
     d->m_isAutoScan = enabled;
     emit isAutoScanChanged();
+
+    if(d->m_isAutoScan) {
+        startScan();
+    }
 }
 
 bool WiFiNative::is5GHzBandSupported() const

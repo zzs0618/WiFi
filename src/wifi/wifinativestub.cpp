@@ -33,6 +33,8 @@ public:
     void onScanResultFound(const WiFiScanResult &result);
     void onScanResultUpdated(const WiFiScanResult &result);
     void onScanResultLost(const WiFiScanResult &result);
+    void onWifiStateChanged();
+    void onAutoScanChanged();
 
 public:
     WiFiNative *m_native = NULL;
@@ -73,6 +75,20 @@ void WiFiNativeStubPrivate::onScanResultLost(const WiFiScanResult &result)
     Q_EMIT q->ScanResultLost(QString::fromUtf8(json));
 }
 
+void WiFiNativeStubPrivate::onWifiStateChanged()
+{
+    Q_Q(WiFiNativeStub);
+    bool enabled = m_native->isWiFiEnabled();
+    Q_EMIT q->WifiStateChanged(enabled);
+}
+
+void WiFiNativeStubPrivate::onAutoScanChanged()
+{
+    Q_Q(WiFiNativeStub);
+    bool autoScan = m_native->isAutoScan();
+    Q_EMIT q->WiFiAutoScanChanged(autoScan);
+}
+
 WiFiNativeStub::WiFiNativeStub(WiFiNative *native)
     : QObject(*(new WiFiNativeStubPrivate), native)
 {
@@ -87,6 +103,10 @@ WiFiNativeStub::WiFiNativeStub(WiFiNative *native)
                             d, &WiFiNativeStubPrivate::onScanResultUpdated);
     QObjectPrivate::connect(d->m_native, &WiFiNative::scanResultLost,
                             d, &WiFiNativeStubPrivate::onScanResultLost);
+    QObjectPrivate::connect(d->m_native, &WiFiNative::wifiStateChanged,
+                            d, &WiFiNativeStubPrivate::onWifiStateChanged);
+    QObjectPrivate::connect(d->m_native, &WiFiNative::isAutoScanChanged,
+                            d, &WiFiNativeStubPrivate::onAutoScanChanged);
 }
 
 QString WiFiNativeStub::connectionInfo() const
@@ -94,6 +114,12 @@ QString WiFiNativeStub::connectionInfo() const
     Q_D(const WiFiNativeStub);
     const QByteArray &json = d->m_native->connectionInfo().toJson();
     return QString::fromUtf8(json);
+}
+
+bool WiFiNativeStub::isWiFiAutoScan() const
+{
+    Q_D(const WiFiNativeStub);
+    return d->m_native->isAutoScan();
 }
 
 bool WiFiNativeStub::isWiFiEnabled() const
@@ -128,7 +154,13 @@ void WiFiNativeStub::RemoveNetwork(const QString &network)
     Q_UNUSED(network);
 }
 
-void WiFiNativeStub::setWiFiEnabled(bool enabled)
+void WiFiNativeStub::SetWiFiAutoScan(bool autoScan)
+{
+    Q_D(WiFiNativeStub);
+    d->m_native->setAutoScan(autoScan);
+}
+
+void WiFiNativeStub::SetWiFiEnabled(bool enabled)
 {
     Q_D(WiFiNativeStub);
     d->m_native->setWiFiEnabled(enabled);
