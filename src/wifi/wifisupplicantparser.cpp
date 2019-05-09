@@ -42,32 +42,42 @@ WiFiSupplicantParser::WiFiSupplicantParser()
  */
 WiFiInfo WiFiSupplicantParser::fromStatus(const QString &status) const
 {
-    WiFiInfo info;
+    WiFiMacAddress address, bssid;
+    QString ssid, ip_address;
+    int frequency = 0, networkId = -1;
     QStringList items = status.split(QRegExp(QStringLiteral("\\n")));
     for (int i = 0; i < items.size(); i++) {
         QString str = items.at(i);
         if (str.startsWith(QStringLiteral("address="))) {
-            info.setMacAddress(WiFiMacAddress(str.section(QLatin1Char('='), 1)));
+            address = WiFiMacAddress(str.section(QLatin1Char('='), 1));
         } else if(str.startsWith(QStringLiteral("bssid="))) {
-            info.setMacAddress(WiFiMacAddress(str.section(QLatin1Char('='), 1)));
+            bssid = WiFiMacAddress(str.section(QLatin1Char('='), 1));
         } else if(str.startsWith(QStringLiteral("ssid="))) {
-            info.setSSID(str.section(QLatin1Char('='), 1));
+            ssid = str.section(QLatin1Char('='), 1);
         } else if(str.startsWith(QStringLiteral("freq="))) {
             bool ok;
             int freq = str.section(QLatin1Char('='), 1).trimmed().toInt(&ok);
             if(ok) {
-                info.setFrequency(freq);
+                frequency = freq;
             }
         } else if(str.startsWith(QStringLiteral("ip_address="))) {
-            info.setIpAddress(str.section(QLatin1Char('='), 1));
+            ip_address = str.section(QLatin1Char('='), 1);
         } else if(str.startsWith(QStringLiteral("id="))) {
             bool ok;
             int id = str.section(QLatin1Char('='), 1).trimmed().toInt(&ok);
             if(ok) {
-                info.setNetworkId(id);
+                networkId = id;
             }
         }
     }
+
+    WiFiInfo info;
+    info.setMacAddress(address);
+    info.setBSSID(bssid);
+    info.setSSID(ssid);
+    info.setFrequency(frequency);
+    info.setIpAddress(ip_address);
+    info.setNetworkId(networkId);
     return info;
 }
 

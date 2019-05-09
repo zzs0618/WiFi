@@ -52,19 +52,13 @@ void WiFiNativePrivate::_q_updateInfoTimeout()
     WiFiInfo info = parser.fromStatus(tool->status());
     if(info != m_info) {
         m_info = info;
-
+        qCDebug(logNat, "[ ConnectionInfo ] \n%s", qUtf8Printable(m_info.toString()));
+        m_netIdMapping.insert(info.ssid(), info.networkId());
         Q_EMIT q->connectionInfoChanged();
     }
 
     WiFiNetworkList list = parser.fromListNetworks(tool->list_networks());
-    int oldId = m_networks.isEmpty() ? -1 : m_networks.last().networkId();
-    int newId = list.isEmpty() ? -1 : list.last().networkId();
-    if(oldId == newId) {
-        return;
-    }
-
     m_networks.clear();
-    m_netIdMapping.clear();
 
     for(int i = 0; i < list.length(); ++i) {
         WiFiNetwork network = list.at(i);
@@ -82,15 +76,17 @@ void WiFiNativePrivate::_q_updateInfoTimeout()
         network.setEncrFlags(parser.fromPairwise(pairwise));
 
         m_networks << network;
-        m_netIdMapping.insert(bssid.toString() + network.ssid(), id);
+        m_netIdMapping.insert(network.ssid(), id);
 
     }
     Q_EMIT q->networksChanged();
 
     for(int i = 0; i < m_scanResults.length(); ++i) {
-        QString key = m_scanResults[i].bssid().toString() + m_scanResults[i].ssid();
+        QString key = m_scanResults[i].ssid();
         int id = m_netIdMapping.value(key, -1);
         if(m_scanResults[i].networkId() != id) {
+            qCDebug(logNat, "[ ScanResult ] [ %s = %d ]",
+                    qUtf8Printable(m_scanResults[i].ssid()), id);
             m_scanResults[i].setNetworkId(id);
             Q_EMIT q->scanResultUpdated(m_scanResults[i]);
         }
@@ -161,7 +157,7 @@ void WiFiNativePrivate::onMessageReceived(const QString &msg)
             QString bssid = rx.cap(2);
             WiFiScanResult result = parser.fromBSS(tool->bss(bssid));
             if(result.isValid()) {
-                QString key = result.bssid().toString() + result.ssid();
+                QString key = result.ssid();
                 result.setNetworkId(m_netIdMapping.value(key, -1));
 
                 m_scanResults << result;

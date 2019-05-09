@@ -88,13 +88,14 @@ QString QQuickWiFiManager::ipAddress() const
     return m_ipAddress;
 }
 
-void QQuickWiFiManager::addNetwork(const QString &ssid, const QString &password)
+void QQuickWiFiManager::addNetwork(int networkId, const QString &ssid,
+                                   const QString &password)
 {
     if(!m_componentCompleted) {
         return;
     }
 
-    WiFiNetwork net(-1, ssid);
+    WiFiNetwork net(networkId, ssid);
     net.setAuthFlags(WiFi::WPA2_PSK);
     net.setPreSharedKey(password);
     m_manager->addNetwork(net);

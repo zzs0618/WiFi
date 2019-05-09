@@ -18,6 +18,8 @@
 
 #include "qquickwifiscanresultmodel_p.h"
 
+#include <WiFi/wifimacaddress.h>
+
 QQuickWiFiScanResultModel::QQuickWiFiScanResultModel(QObject *parent)
     : QAbstractListModel(parent)
     , m_manager(new WiFiManager(this))
@@ -49,9 +51,21 @@ QVariant QQuickWiFiScanResultModel::data(const QModelIndex &index,
     QVariantMap scanResult = m_manager->scanResults().value(index.row()).toMap();
     QVariant value;
     switch (role) {
-        case Qt::DisplayRole + 7:
-            value = WiFiManager::CalculateSignalLevel(scanResult["rssi"].toInt(), 4);
-            break;
+        case Qt::DisplayRole + 7: {
+            int rssi = scanResult["rssi"].toInt();
+            value = WiFiManager::CalculateSignalLevel(rssi, 4);
+        }
+        break;
+        case Qt::DisplayRole + 8: {
+            WiFiMacAddress bssid = WiFiMacAddress(scanResult["bssid"].toString());
+            int networkId = scanResult["networkId"].toInt();
+            if(m_manager->connectionInfo().bssid() == bssid) {
+                value = 2;
+            } else {
+                value = (networkId >= 0) ? 1 : 0;    // 2: Current, 1: Network, 0: ScanResult
+            }
+        }
+        break;
         default:
             value = scanResult.value(roleNames().value(role));
             break;
@@ -68,7 +82,8 @@ QHash<int, QByteArray> QQuickWiFiScanResultModel::roleNames() const
         {Qt::DisplayRole + 4, "frequency"},
         {Qt::DisplayRole + 5, "flags"},
         {Qt::DisplayRole + 6, "networkId"},
-        {Qt::DisplayRole + 7, "signalLevel"}
+        {Qt::DisplayRole + 7, "signalLevel"},
+        {Qt::DisplayRole + 8, "type"}
     };
 
     return roles;

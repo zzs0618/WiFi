@@ -56,7 +56,8 @@ public:
     int frequency() const;
     QString ipAddress() const;
 
-    Q_INVOKABLE void addNetwork(const QString &ssid, const QString &password);
+    Q_INVOKABLE void addNetwork(int networkId, const QString &ssid,
+                                const QString &password);
 
     //From QQmlParserStatus
     void classBegin() Q_DECL_OVERRIDE;

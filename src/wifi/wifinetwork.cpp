@@ -316,11 +316,6 @@ QByteArray WiFiNetwork::toJson() const
 WiFiNetwork WiFiNetwork::fromMap(const QVariantMap &map)
 {
     int id = map[QLatin1String("networkId")].toInt();
-    if(id < 0) {
-        qCritical() << "WiFiNetwork::fromMap. Error at: id is invalid." ;
-        return WiFiNetwork();
-    }
-
     QString ssid = map[QLatin1String("ssid")].toString();
     WiFiNetwork info(id, ssid);
     QString bssid = map[QLatin1String("bssid")].toString();
