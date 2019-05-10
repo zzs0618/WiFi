@@ -258,6 +258,9 @@ public:
      */
     QString p2p_reject() const;
 
+    void dhcpc_request();
+    void dhcpc_release();
+
 public:
     bool isRunning() const;
 

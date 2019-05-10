@@ -41,9 +41,13 @@
                 psk         WIFI 网络的预共享密钥
             -->
             <arg name="network" type="s" direction="in"/>
+            <arg name="networkId" type="i" direction="out"/>
+        </method>
+        <method name="SelectNetwork" >
+            <arg name="networkId" type="i" direction="in"/>
         </method>
         <method name="RemoveNetwork" >
-            <arg name="network" type="s" direction="in"/>
+            <arg name="networkId" type="i" direction="in"/>
         </method>
 
         <signal name="WifiStateChanged">
@@ -88,6 +92,18 @@
         </signal>
         <signal name="ScanResultLost">
             <arg name="bss" type="s" direction="out"/>
+        </signal>
+        <signal name="NetworkConnecting">
+            <arg name="networkId" type="i" direction="out"/>
+        </signal>
+        <signal name="NetworkAuthenticated">
+            <arg name="networkId" type="i" direction="out"/>
+        </signal>
+        <signal name="NetworkConnected">
+            <arg name="networkId" type="i" direction="out"/>
+        </signal>
+        <signal name="NetworkErrorOccurred">
+            <arg name="networkId" type="i" direction="out"/>
         </signal>
     </interface>
 </node>

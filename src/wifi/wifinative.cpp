@@ -26,6 +26,8 @@ Q_DECLARE_LOGGING_CATEGORY(logNat)
 // in one source file
 Q_LOGGING_CATEGORY(logNat, "wifi.native")
 
+static int WIFI_NATIVE_NETWORK_CONNECT_TIMEOUT = 5; // seconds
+
 /*!
     \class WiFiNative
     \inmodule WiFi
@@ -39,6 +41,13 @@ WiFiNativePrivate::WiFiNativePrivate()
     : QObjectPrivate()
     , tool(WiFiSupplicantTool::instance())
 {
+    if(!qEnvironmentVariableIsEmpty("WIFI_NATIVE_NETWORK_CONNECT_TIMEOUT")) {
+        bool ok;
+        int timeout = qgetenv("WIFI_NATIVE_NETWORK_CONNECT_TIMEOUT").toInt(&ok);
+        if(ok) {
+            WIFI_NATIVE_NETWORK_CONNECT_TIMEOUT = timeout;
+        }
+    }
 }
 
 WiFiNativePrivate::~WiFiNativePrivate()
@@ -49,12 +58,28 @@ void WiFiNativePrivate::_q_updateInfoTimeout()
 {
     Q_Q(WiFiNative);
 
+    m_netIdMapping.clear();
+
     WiFiInfo info = parser.fromStatus(tool->status());
+    bool ipChanged = m_info.ipAddress() != info.ipAddress();
     if(info != m_info) {
         m_info = info;
-        qCDebug(logNat, "[ ConnectionInfo ] \n%s", qUtf8Printable(m_info.toString()));
-        m_netIdMapping.insert(info.ssid(), info.networkId());
+        qCDebug(logNat, "[ DEBUG ] ConnectionInfo:\n%s",
+                qUtf8Printable(m_info.toString()));
+        m_netIdMapping.insert(m_info.ssid(), m_info.networkId());
         Q_EMIT q->connectionInfoChanged();
+    }
+
+    if(!m_info.ipAddress().isEmpty() && m_info.networkId() >= 0 && ipChanged) {
+        qCInfo(logNat, "[ OK ] Network(%d:%s) connected and get ip(%s).[times: %d ms]"
+               , m_info.networkId(), qUtf8Printable(m_info.ssid())
+               , qUtf8Printable(m_info.ipAddress())
+               , (timer_ConnNet->interval() - timer_ConnNet->remainingTime()));
+        if(m_info.networkId() == timer_ConnNetId) {
+            timer_ConnNetId = -1;
+            timer_ConnNet->stop();
+        }
+        Q_EMIT q->networkConnected(m_info.networkId());
     }
 
     WiFiNetworkList list = parser.fromListNetworks(tool->list_networks());
@@ -85,7 +110,7 @@ void WiFiNativePrivate::_q_updateInfoTimeout()
         QString key = m_scanResults[i].ssid();
         int id = m_netIdMapping.value(key, -1);
         if(m_scanResults[i].networkId() != id) {
-            qCDebug(logNat, "[ ScanResult ] [ %s = %d ]",
+            qCDebug(logNat, "[ DEBUG ] Update ScanResult NetworkId (%s = %d) ",
                     qUtf8Printable(m_scanResults[i].ssid()), id);
             m_scanResults[i].setNetworkId(id);
             Q_EMIT q->scanResultUpdated(m_scanResults[i]);
@@ -96,6 +121,18 @@ void WiFiNativePrivate::_q_updateInfoTimeout()
 void WiFiNativePrivate::_q_autoScanTimeout()
 {
     tool->scan();
+}
+
+void WiFiNativePrivate::_q_connNetTimeout()
+{
+    Q_Q(WiFiNative);
+
+    int networkId = timer_ConnNetId;
+    qCCritical(logNat, "[ NO ] Network(%d) authenticate timeout.[times: %d ms]"
+               , networkId, timer_ConnNet->interval());
+    timer_ConnNetId = -1;
+    tool->remove_network(networkId);
+    Q_EMIT q->networkErrorOccurred(networkId);
 }
 
 void WiFiNativePrivate::onSupplicantStarted()
@@ -118,12 +155,28 @@ void WiFiNativePrivate::onSupplicantStarted()
                             SLOT(_q_autoScanTimeout()));
     }
 
+    if(!timer_ConnNet) {
+        timer_ConnNet = new QTimer(q);
+        timer_ConnNet->setSingleShot(true);
+        timer_ConnNet->setInterval(WIFI_NATIVE_NETWORK_CONNECT_TIMEOUT * 1000);
+        timer_ConnNet->connect(timer_ConnNet, SIGNAL(timeout()), q,
+                               SLOT(_q_connNetTimeout()));
+    }
+
     if(!timer_Info) {
         timer_Info = new QTimer(q);
         timer_Info->setInterval(1000);
         timer_Info->connect(timer_Info, SIGNAL(timeout()), q,
                             SLOT(_q_updateInfoTimeout()));
     }
+
+    WiFiInfo info = parser.fromStatus(tool->status());
+    m_info = info;
+    if(!m_info.ipAddress().isEmpty() && m_info.networkId() < 0) {
+        tool->dhcpc_release();
+    }
+    Q_EMIT q->connectionInfoChanged();
+
     timer_Info->start();
     Q_EMIT q->wifiStateChanged();
 }
@@ -176,10 +229,71 @@ void WiFiNativePrivate::onMessageReceived(const QString &msg)
                 Q_EMIT q->scanResultLost(m_scanResults.takeAt(index));
             }
         }
+    } else if(msg.startsWith(QStringLiteral(WPA_EVENT_TEMP_DISABLED))) {
+        // CTRL-EVENT-SSID-TEMP-DISABLED id=1 ssid=\"hsaeyz\" auth_failures=1 duration=10 reason=WRONG_KEY
+        QString ssid;
+        int networkId = -1;
+        QStringList items = msg.split(QRegExp(QStringLiteral(" ")));
+        for (int i = 0; i < items.size(); i++) {
+            QString str = items.at(i);
+            if (str.startsWith(QStringLiteral("id="))) {
+                bool ok;
+                int id = str.section(QLatin1Char('='), 1).trimmed().toInt(&ok);
+                if(ok) {
+                    networkId = id;
+                }
+            } else if(str.startsWith(QStringLiteral("ssid="))) {
+                ssid = str.section(QLatin1Char('"'), 1);
+            }
+        }
+        if(networkId == timer_ConnNetId) {
+            qCCritical(logNat,
+                       "[ NO ] Network(%d:%s) authenticate failed.[times: %d ms]\n%s"
+                       , networkId, qUtf8Printable(ssid)
+                       , (timer_ConnNet->interval() - timer_ConnNet->remainingTime())
+                       , qUtf8Printable(msg));
+            timer_ConnNetId = -1;
+            timer_ConnNet->stop();
+            tool->remove_network(networkId);
+            Q_EMIT q->networkErrorOccurred(networkId);
+        }
+    } else if(msg.startsWith(QStringLiteral(WPA_EVENT_CONNECTED))) {
+        // CTRL-EVENT-CONNECTED - Connection to 0c:4b:54:7a:21:21 completed [id=2 id_str=]
+        int networkId = -1;
+        QStringList items = msg.split(QRegExp(QStringLiteral(" ")));
+        for (int i = 0; i < items.size(); i++) {
+            QString str = items.at(i);
+            if (str.startsWith(QStringLiteral("[id="))) {
+                bool ok;
+                int id = str.section(QLatin1Char('='), 1).trimmed().toInt(&ok);
+                if(ok) {
+                    networkId = id;
+                }
+            }
+        }
+
+        if(timer_ConnNet->isActive()) {
+            qCInfo(logNat, "[ OK ] Network(%d) authenticated.[times: %d ms]"
+                   , networkId, (timer_ConnNet->interval() - timer_ConnNet->remainingTime()));
+        } else {
+            qCInfo(logNat, "[ OK ] Network(%d) authenticated.[ auto ]", networkId);
+        }
+        Q_EMIT q->networkAuthenticated(networkId);
+
+        if(m_info.ipAddress().isEmpty()) {
+            tool->dhcpc_request();
+        }
+        this->_q_updateInfoTimeout();
+    } else if(msg.startsWith(QStringLiteral(WPA_EVENT_DISCONNECTED))) {
+        qCInfo(logNat, "[ OK ] Network(%d) disconnected.", m_info.networkId());
+        if(!m_info.ipAddress().isEmpty()) {
+            tool->dhcpc_release();
+        }
+        this->_q_updateInfoTimeout();
     }
 }
 
-void WiFiNativePrivate::addNetwork(const WiFiNetwork &network)
+int WiFiNativePrivate::addNetwork(const WiFiNetwork &network)
 {
     bool ok;
     int id = tool->add_network().toInt(&ok);
@@ -189,15 +303,16 @@ void WiFiNativePrivate::addNetwork(const WiFiNetwork &network)
         newNet.setAuthFlags(network.authFlags());
         newNet.setEncrFlags(network.encrFlags());
         newNet.setPreSharedKey(network.preSharedKey());
-        this->editNetwork(newNet);
+        return this->editNetwork(newNet);
     }
+    return id;
 }
 
-void WiFiNativePrivate::editNetwork(const WiFiNetwork &network)
+int WiFiNativePrivate::editNetwork(const WiFiNetwork &network)
 {
     int id = network.networkId();
     if(id < 0) {
-        return;
+        return id;
     }
 
     tool->set_network(id, QLatin1String("ssid"), network.ssid());
@@ -263,12 +378,28 @@ void WiFiNativePrivate::editNetwork(const WiFiNetwork &network)
 
     QString result = tool->enable_network(id);
     if(!result.startsWith(QStringLiteral("OK"))) {
-        qCCritical(logWiFi,
-                   "Failed to enable network in wpa_supplicant configuration.\n%s",
-                   qUtf8Printable(result));
+        qCCritical(logNat, "[ NO ] Network(%d) enable failed.\n%s"
+                   , id, qUtf8Printable(result));
     }
 
+    this->selectNetwork(id);
     tool->save_config();
+
+    return id;
+}
+
+void WiFiNativePrivate::selectNetwork(int networkId)
+{
+    Q_Q(WiFiNative);
+    Q_EMIT q->networkConnecting(networkId);
+    timer_ConnNetId = networkId;
+    timer_ConnNet->start();
+    tool->select_network(networkId);
+}
+
+void WiFiNativePrivate::removeNetwork(int networkId)
+{
+    tool->remove_network(networkId);
 }
 
 /*!
@@ -424,14 +555,26 @@ void WiFiNative::startScan()
     QTimer::singleShot(0, this, SLOT(_q_autoScanTimeout()));
 }
 
-void WiFiNative::addNetwork(const WiFiNetwork &network)
+int WiFiNative::addNetwork(const WiFiNetwork &network)
 {
     Q_D(WiFiNative);
     if(network.isValid()) {
-        d->editNetwork(network);
+        return d->editNetwork(network);
     } else {
-        d->addNetwork(network);
+        return d->addNetwork(network);
     }
+}
+
+void WiFiNative::selectNetwork(int networkId)
+{
+    Q_D(WiFiNative);
+    d->selectNetwork(networkId);
+}
+
+void WiFiNative::removeNetwork(int networkId)
+{
+    Q_D(WiFiNative);
+    d->removeNetwork(networkId);
 }
 
 #include "moc_wifinative.cpp"

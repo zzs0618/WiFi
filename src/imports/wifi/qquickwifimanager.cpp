@@ -29,6 +29,15 @@ QQuickWiFiManager::QQuickWiFiManager(QObject *parent)
             SIGNAL(isWiFiEnabledChanged()));
     connect(m_manager, SIGNAL(connectionInfoChanged()),
             SLOT(onConnectionInfoChanged()));
+
+    connect(m_manager, SIGNAL(networkConnecting(int)),
+            SIGNAL(networkConnecting(int)));
+    connect(m_manager, SIGNAL(networkAuthenticated(int)),
+            SIGNAL(networkAuthenticated(int)));
+    connect(m_manager, SIGNAL(networkConnected(int)),
+            SIGNAL(networkConnected(int)));
+    connect(m_manager, SIGNAL(networkErrorOccurred(int)),
+            SIGNAL(networkErrorOccurred(int)));
 }
 
 bool QQuickWiFiManager::isWiFiServiced() const
@@ -88,17 +97,40 @@ QString QQuickWiFiManager::ipAddress() const
     return m_ipAddress;
 }
 
-void QQuickWiFiManager::addNetwork(int networkId, const QString &ssid,
-                                   const QString &password)
+int QQuickWiFiManager::addNetwork(int networkId, const QString &ssid,
+                                  const QString &password)
 {
     if(!m_componentCompleted) {
-        return;
+        return -1;
     }
 
     WiFiNetwork net(networkId, ssid);
     net.setAuthFlags(WiFi::WPA2_PSK);
     net.setPreSharedKey(password);
-    m_manager->addNetwork(net);
+    return m_manager->addNetwork(net);
+}
+
+int QQuickWiFiManager::addNetwork(const QString &ssid, const QString &password)
+{
+    return this->addNetwork(-1, ssid, password);
+}
+
+void QQuickWiFiManager::selectNetwork(int networkId)
+{
+    if(!m_componentCompleted) {
+        return;
+    }
+
+    return m_manager->selectNetwork(networkId);
+}
+
+void QQuickWiFiManager::removeNetwork(int networkId)
+{
+    if(!m_componentCompleted) {
+        return;
+    }
+
+    return m_manager->removeNetwork(networkId);
 }
 
 void QQuickWiFiManager::classBegin()

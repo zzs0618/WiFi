@@ -50,7 +50,9 @@ public:
     static quint16 CalculateSignalLevel(int rssi, quint16 numLevels);
 
 public slots:
-    void addNetwork(const WiFiNetwork &network);
+    int addNetwork(const WiFiNetwork &network);
+    void selectNetwork(int networkId);
+    void removeNetwork(int networkId);
 
 signals:
     void isWiFiServicedChanged();
@@ -59,6 +61,11 @@ signals:
     void connectionInfoChanged();
     void scanResultsChanged();
     void networksChanged();
+
+    void networkConnecting(int networkId);
+    void networkAuthenticated(int networkId);
+    void networkConnected(int networkId);
+    void networkErrorOccurred(int networkId);
 
 private:
     Q_DECLARE_PRIVATE(WiFiManager)

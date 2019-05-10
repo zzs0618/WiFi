@@ -178,13 +178,7 @@ void WiFiSupplicantToolPrivate::wpaProcessMsg(char *msg)
     qCDebug(logWPA, "[ DEBUG ] WPA EVENT MSG<%d> : %s", priority,
             qUtf8Printable(message));
 
-    if(message.startsWith(QStringLiteral(WPA_EVENT_CONNECTED))) {
-        QProcess::execute(QString::fromLocal8Bit(WIFI_WPA_ACTION_DHCPC),
-                          QStringList() << m_interface << QStringLiteral("CONNECTED"));
-    } else if(message.startsWith(QStringLiteral(WPA_EVENT_DISCONNECTED))) {
-        QProcess::execute(QString::fromLocal8Bit(WIFI_WPA_ACTION_DHCPC),
-                          QStringList() << m_interface << QStringLiteral("DISCONNECTED"));
-    } else if(message.startsWith(QStringLiteral(P2P_EVENT_GROUP_STARTED))) {
+    if(message.startsWith(QStringLiteral(P2P_EVENT_GROUP_STARTED))) {
         QProcess::execute(QString::fromLocal8Bit(WIFI_WPA_ACTION_DHCPD),
                           QStringList() << m_interface << message);
     } else if(message.startsWith(QStringLiteral(P2P_EVENT_GROUP_REMOVED))) {
@@ -432,7 +426,11 @@ QString WiFiSupplicantTool::set_network(int id, const QString &variable,
         param = param.arg(value.toString());
     }
     command = command.arg(id).arg(param);
-    return d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+    QString result = d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+    if(result.startsWith(QStringLiteral("FAIL"))) {
+        qCCritical(logWPA, "[ ERROR ] %s.", qUtf8Printable(command));
+    }
+    return result;
 }
 
 QString WiFiSupplicantTool::get_network(int id, const QString &variable) const
@@ -589,6 +587,22 @@ QString WiFiSupplicantTool::p2p_reject() const
     Q_D(const WiFiSupplicantTool);
     QString command = QStringLiteral("P2P_REJECT");
     return d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+}
+
+void WiFiSupplicantTool::dhcpc_request()
+{
+    Q_D(WiFiSupplicantTool);
+
+    QProcess::execute(QString::fromLocal8Bit(WIFI_WPA_ACTION_DHCPC),
+                      QStringList() << d->m_interface << QStringLiteral("CONNECTED"));
+}
+
+void WiFiSupplicantTool::dhcpc_release()
+{
+    Q_D(WiFiSupplicantTool);
+
+    QProcess::execute(QString::fromLocal8Bit(WIFI_WPA_ACTION_DHCPC),
+                      QStringList() << d->m_interface << QStringLiteral("DISCONNECTED"));
 }
 
 bool WiFiSupplicantTool::isRunning() const

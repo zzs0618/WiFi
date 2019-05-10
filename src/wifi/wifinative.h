@@ -54,7 +54,9 @@ public slots:
     void saveConfiguration();
     void startScan();
 
-    void addNetwork(const WiFiNetwork &network);
+    int addNetwork(const WiFiNetwork &network);
+    void selectNetwork(int networkId);
+    void removeNetwork(int networkId);
 
 signals:
     void wifiStateChanged();
@@ -65,11 +67,17 @@ signals:
     void scanResultLost(const WiFiScanResult &result);
     void networksChanged();
 
+    void networkConnecting(int networkId);
+    void networkAuthenticated(int networkId);
+    void networkConnected(int networkId);
+    void networkErrorOccurred(int networkId);
+
 private:
     Q_DECLARE_PRIVATE(WiFiNative)
 
     Q_PRIVATE_SLOT(d_func(), void _q_updateInfoTimeout())
     Q_PRIVATE_SLOT(d_func(), void _q_autoScanTimeout())
+    Q_PRIVATE_SLOT(d_func(), void _q_connNetTimeout())
 };
 
 #endif // WIFINATIVE_H

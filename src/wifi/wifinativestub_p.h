@@ -50,17 +50,22 @@ public: // PROPERTIES
     QString scanResults() const;
 
 public Q_SLOTS: // METHODS
-    void AddNetwork(const QString &network);
-    void RemoveNetwork(const QString &network);
+    int AddNetwork(const QString &network);
+    void RemoveNetwork(int networkId);
+    void SelectNetwork(int networkId);
     void SetWiFiAutoScan(bool autoScan);
     void SetWiFiEnabled(bool enabled);
 Q_SIGNALS: // SIGNALS
     void ConnectionInfoChanged(const QString &info);
+    void NetworkAuthenticated(int networkId);
+    void NetworkConnected(int networkId);
+    void NetworkConnecting(int networkId);
+    void NetworkErrorOccurred(int networkId);
     void ScanResultFound(const QString &bss);
     void ScanResultLost(const QString &bss);
     void ScanResultUpdated(const QString &bss);
-    void WifiStateChanged(bool enabled);
     void WiFiAutoScanChanged(bool autoScan);
+    void WifiStateChanged(bool enabled);
 
 private:
     Q_DECLARE_PRIVATE(WiFiNativeStub)

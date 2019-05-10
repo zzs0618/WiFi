@@ -162,6 +162,14 @@ void WiFiNativeProxyPrivate::processServiced(bool serviced)
         Q_EMIT q->networksChanged();
     } else {
         q->setWiFiEnabled(false);
+        m_isAutoScan = false;
+        Q_EMIT q->isWiFiAutoScanChanged();
+        m_info = WiFiInfo();
+        Q_EMIT q->connectionInfoChanged();
+        m_scanResults = WiFiScanResultList();
+        Q_EMIT q->scanResultsChanged();
+        m_networks = WiFiNetworkList();
+        Q_EMIT q->networksChanged();
     }
 }
 
@@ -175,6 +183,14 @@ WiFiNativeProxy::WiFiNativeProxy(QObject *parent)
     QObjectPrivate::connect(d->m_station,
                             &WifiNativeStationInterface::ConnectionInfoChanged,
                             d, &WiFiNativeProxyPrivate::onConnectionInfoChanged);
+    connect(d->m_station, SIGNAL(NetworkAuthenticated(int)),
+            SIGNAL(networkAuthenticated(int)));
+    connect(d->m_station, SIGNAL(NetworkConnecting(int)),
+            SIGNAL(networkConnecting(int)));
+    connect(d->m_station, SIGNAL(NetworkConnected(int)),
+            SIGNAL(networkConnected(int)));
+    connect(d->m_station, SIGNAL(NetworkErrorOccurred(int)),
+            SIGNAL(networkErrorOccurred(int)));
     QObjectPrivate::connect(d->m_station,
                             &WifiNativeStationInterface::ScanResultFound,
                             d, &WiFiNativeProxyPrivate::onScanResultFound);
@@ -274,11 +290,32 @@ WiFiNetworkList WiFiNativeProxy::networks() const
     return d->m_networks;
 }
 
-void WiFiNativeProxy::addNetwork(const WiFiNetwork &network)
+int WiFiNativeProxy::addNetwork(const WiFiNetwork &network)
 {
     Q_D(WiFiNativeProxy);
 
     if(d->m_isServiced) {
-        d->m_station->AddNetwork(QString::fromUtf8(network.toJson()));
+        QDBusPendingReply<int> reply = d->m_station->AddNetwork(QString::fromUtf8(
+                network.toJson()));
+        reply.waitForFinished();
+        return reply.value();
+    }
+    return -1;
+}
+
+void WiFiNativeProxy::selectNetwork(int networkId)
+{
+    Q_D(WiFiNativeProxy);
+
+    if(d->m_isServiced) {
+        d->m_station->SelectNetwork(networkId);
+    }
+}
+void WiFiNativeProxy::removeNetwork(int networkId)
+{
+    Q_D(WiFiNativeProxy);
+
+    if(d->m_isServiced) {
+        d->m_station->RemoveNetwork(networkId);
     }
 }

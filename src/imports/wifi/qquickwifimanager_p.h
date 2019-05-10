@@ -56,8 +56,11 @@ public:
     int frequency() const;
     QString ipAddress() const;
 
-    Q_INVOKABLE void addNetwork(int networkId, const QString &ssid,
-                                const QString &password);
+    Q_INVOKABLE int addNetwork(int networkId, const QString &ssid,
+                               const QString &password);
+    Q_INVOKABLE int addNetwork(const QString &ssid, const QString &password);
+    Q_INVOKABLE void selectNetwork(int networkId);
+    Q_INVOKABLE void removeNetwork(int networkId);
 
     //From QQmlParserStatus
     void classBegin() Q_DECL_OVERRIDE;
@@ -73,6 +76,11 @@ signals:
     void rssiChanged();
     void frequencyChanged();
     void ipAddressChanged();
+
+    void networkConnecting(int networkId);
+    void networkAuthenticated(int networkId);
+    void networkConnected(int networkId);
+    void networkErrorOccurred(int networkId);
 
 private slots:
     void onConnectionInfoChanged();

@@ -40,14 +40,19 @@ public:
 
     void _q_updateInfoTimeout();
     void _q_autoScanTimeout();
+    void _q_connNetTimeout();
 
-    void addNetwork(const WiFiNetwork &network);
-    void editNetwork(const WiFiNetwork &network);
+    int addNetwork(const WiFiNetwork &network);
+    int editNetwork(const WiFiNetwork &network);
+    void selectNetwork(int networkId);
+    void removeNetwork(int networkId);
 
     WiFiSupplicantParser parser;
     WiFiSupplicantTool *tool = NULL;
     QTimer *timer_Info = NULL;
     QTimer *timer_Scan = NULL;
+    QTimer *timer_ConnNet = NULL;
+    int timer_ConnNetId = -1;
 
     WiFi::State m_state = WiFi::StateDisabled;
     bool m_isAutoScan = false;

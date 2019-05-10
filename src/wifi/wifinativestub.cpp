@@ -30,6 +30,10 @@ public:
     ~WiFiNativeStubPrivate();
 
     void onConnectionInfoChanged();
+    void onNetworkAuthenticated(int networkId);
+    void onNetworkConnected(int networkId);
+    void onNetworkConnecting(int networkId);
+    void onNetworkErrorOccurred(int networkId);
     void onScanResultFound(const WiFiScanResult &result);
     void onScanResultUpdated(const WiFiScanResult &result);
     void onScanResultLost(const WiFiScanResult &result);
@@ -54,6 +58,27 @@ void WiFiNativeStubPrivate::onConnectionInfoChanged()
 
     const QByteArray &json = m_native->connectionInfo().toJson();
     Q_EMIT q->ConnectionInfoChanged(QString::fromUtf8(json));
+}
+
+void WiFiNativeStubPrivate::onNetworkAuthenticated(int networkId)
+{
+    Q_Q(WiFiNativeStub);
+    Q_EMIT q->NetworkAuthenticated(networkId);
+}
+void WiFiNativeStubPrivate::onNetworkConnected(int networkId)
+{
+    Q_Q(WiFiNativeStub);
+    Q_EMIT q->NetworkConnected(networkId);
+}
+void WiFiNativeStubPrivate::onNetworkConnecting(int networkId)
+{
+    Q_Q(WiFiNativeStub);
+    Q_EMIT q->NetworkConnecting(networkId);
+}
+void WiFiNativeStubPrivate::onNetworkErrorOccurred(int networkId)
+{
+    Q_Q(WiFiNativeStub);
+    Q_EMIT q->NetworkErrorOccurred(networkId);
 }
 
 void WiFiNativeStubPrivate::onScanResultFound(const WiFiScanResult &result)
@@ -97,6 +122,14 @@ WiFiNativeStub::WiFiNativeStub(WiFiNative *native)
 
     QObjectPrivate::connect(d->m_native, &WiFiNative::connectionInfoChanged,
                             d, &WiFiNativeStubPrivate::onConnectionInfoChanged);
+    QObjectPrivate::connect(d->m_native, &WiFiNative::networkAuthenticated,
+                            d, &WiFiNativeStubPrivate::onNetworkAuthenticated);
+    QObjectPrivate::connect(d->m_native, &WiFiNative::networkConnected,
+                            d, &WiFiNativeStubPrivate::onNetworkConnected);
+    QObjectPrivate::connect(d->m_native, &WiFiNative::networkConnecting,
+                            d, &WiFiNativeStubPrivate::onNetworkConnecting);
+    QObjectPrivate::connect(d->m_native, &WiFiNative::networkErrorOccurred,
+                            d, &WiFiNativeStubPrivate::onNetworkErrorOccurred);
     QObjectPrivate::connect(d->m_native, &WiFiNative::scanResultFound,
                             d, &WiFiNativeStubPrivate::onScanResultFound);
     QObjectPrivate::connect(d->m_native, &WiFiNative::scanResultUpdated,
@@ -142,16 +175,23 @@ QString WiFiNativeStub::scanResults() const
     return QString::fromUtf8(json);
 }
 
-void WiFiNativeStub::AddNetwork(const QString &network)
+int WiFiNativeStub::AddNetwork(const QString &network)
 {
     Q_D(WiFiNativeStub);
     WiFiNetwork net = WiFiNetwork::fromJson(network.toUtf8());
-    d->m_native->addNetwork(net);
+    return d->m_native->addNetwork(net);
 }
 
-void WiFiNativeStub::RemoveNetwork(const QString &network)
+void WiFiNativeStub::SelectNetwork(int networkId)
 {
-    Q_UNUSED(network);
+    Q_D(WiFiNativeStub);
+    d->m_native->selectNetwork(networkId);
+}
+
+void WiFiNativeStub::RemoveNetwork(int networkId)
+{
+    Q_D(WiFiNativeStub);
+    d->m_native->removeNetwork(networkId);
 }
 
 void WiFiNativeStub::SetWiFiAutoScan(bool autoScan)

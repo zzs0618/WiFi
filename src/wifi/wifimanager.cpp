@@ -64,6 +64,15 @@ WiFiManager::WiFiManager(QObject * parent)
     connect(d->m_proxy, SIGNAL(scanResultsChanged()), this,
             SIGNAL(scanResultsChanged()));
     connect(d->m_proxy, SIGNAL(networksChanged()), this, SIGNAL(networksChanged()));
+
+    connect(d->m_proxy, SIGNAL(networkAuthenticated(int)), this,
+            SIGNAL(networkAuthenticated(int)));
+    connect(d->m_proxy, SIGNAL(networkConnecting(int)), this,
+            SIGNAL(networkConnecting(int)));
+    connect(d->m_proxy, SIGNAL(networkConnected(int)), this,
+            SIGNAL(networkConnected(int)));
+    connect(d->m_proxy, SIGNAL(networkErrorOccurred(int)), this,
+            SIGNAL(networkErrorOccurred(int)));
 }
 
 bool WiFiManager::isWiFiServiced() const
@@ -157,10 +166,20 @@ quint16 WiFiManager::CalculateSignalLevel(int rssi, quint16 numLevels)
     }
 }
 
-void WiFiManager::addNetwork(const WiFiNetwork &network)
+int WiFiManager::addNetwork(const WiFiNetwork &network)
 {
     Q_D(WiFiManager);
     return d->m_proxy->addNetwork(network);
+}
+void WiFiManager::selectNetwork(int networkId)
+{
+    Q_D(WiFiManager);
+    return d->m_proxy->selectNetwork(networkId);
+}
+void WiFiManager::removeNetwork(int networkId)
+{
+    Q_D(WiFiManager);
+    return d->m_proxy->removeNetwork(networkId);
 }
 
 #include "moc_wifimanager.cpp"
