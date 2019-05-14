@@ -42,6 +42,9 @@ public:
     void _q_autoScanTimeout();
     void _q_connNetTimeout();
 
+    QString getSSIDByNetworkId(int networkId) const;
+    bool testSSIDofScanResults(const QString &ssid);
+
     int addNetwork(const WiFiNetwork &network);
     int editNetwork(const WiFiNetwork &network);
     void selectNetwork(int networkId);

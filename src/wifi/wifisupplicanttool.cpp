@@ -26,7 +26,7 @@ extern "C"
 }
 
 // in one source file
-Q_LOGGING_CATEGORY(logWPA, "wifi.wpa.tool", QtWarningMsg)
+Q_LOGGING_CATEGORY(logWPA, "wifi.wpa.tool", QtInfoMsg)
 
 QT_BEGIN_NAMESPACE
 
@@ -397,7 +397,9 @@ QString WiFiSupplicantTool::add_network() const
 {
     Q_D(const WiFiSupplicantTool);
     QString command = QStringLiteral("ADD_NETWORK");
-    return d->wpaCtrlRequest(command); // "0\n"
+    QString result = d->wpaCtrlRequest(command); // "0\n"
+    qCDebug(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
+    return result;
 }
 
 QString WiFiSupplicantTool::remove_network(int id) const
@@ -409,7 +411,13 @@ QString WiFiSupplicantTool::remove_network(int id) const
     } else {
         command = command.arg(QLatin1String("all"));
     }
-    return d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+    QString result = d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+    if(result.startsWith(QStringLiteral("FAIL"))) {
+        qCCritical(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
+    }else{
+        qCDebug(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
+    }
+    return result;
 }
 
 QString WiFiSupplicantTool::set_network(int id, const QString &variable,
@@ -428,7 +436,9 @@ QString WiFiSupplicantTool::set_network(int id, const QString &variable,
     command = command.arg(id).arg(param);
     QString result = d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
     if(result.startsWith(QStringLiteral("FAIL"))) {
-        qCCritical(logWPA, "[ ERROR ] %s.", qUtf8Printable(command));
+        qCCritical(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
+    }else{
+        qCDebug(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
     }
     return result;
 }
@@ -446,7 +456,13 @@ QString WiFiSupplicantTool::select_network(int id) const
     Q_D(const WiFiSupplicantTool);
     QString command = QStringLiteral("SELECT_NETWORK %1");
     command = command.arg(id);
-    return d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+    QString result = d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+    if(result.startsWith(QStringLiteral("FAIL"))) {
+        qCCritical(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
+    }else{
+        qCDebug(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
+    }
+    return result;
 }
 
 QString WiFiSupplicantTool::enable_network(int id) const
@@ -458,7 +474,13 @@ QString WiFiSupplicantTool::enable_network(int id) const
     } else {
         command = command.arg(QLatin1String("all"));
     }
-    return d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+    QString result = d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+    if(result.startsWith(QStringLiteral("FAIL"))) {
+        qCCritical(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
+    }else{
+        qCDebug(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
+    }
+    return result;
 }
 
 QString WiFiSupplicantTool::disable_network(int id) const
@@ -470,14 +492,26 @@ QString WiFiSupplicantTool::disable_network(int id) const
     } else {
         command = command.arg(QLatin1String("all"));
     }
-    return d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+    QString result = d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+    if(result.startsWith(QStringLiteral("FAIL"))) {
+        qCCritical(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
+    }else{
+        qCDebug(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
+    }
+    return result;
 }
 
 QString WiFiSupplicantTool::save_config() const
 {
     Q_D(const WiFiSupplicantTool);
     QString command = QStringLiteral("SAVE_CONFIG");
-    return d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+    QString result = d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+    if(result.startsWith(QStringLiteral("FAIL"))) {
+        qCCritical(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
+    }else{
+        qCDebug(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
+    }
+    return result;
 }
 
 QString WiFiSupplicantTool::p2p_find(int duration, const QString &type) const
@@ -490,14 +524,26 @@ QString WiFiSupplicantTool::p2p_find(int duration, const QString &type) const
     if(!type.isEmpty()) {
         command += QString(tr(" type=%1")).arg(type);
     }
-    return d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+    QString result = d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+    if(result.startsWith(QStringLiteral("FAIL"))) {
+        qCCritical(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
+    }else{
+        qCDebug(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
+    }
+    return result;
 }
 
 QString WiFiSupplicantTool::p2p_stop_find() const
 {
     Q_D(const WiFiSupplicantTool);
     QString command = QStringLiteral("P2P_STOP_FIND");
-    return d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+    QString result = d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+    if(result.startsWith(QStringLiteral("FAIL"))) {
+        qCCritical(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
+    }else{
+        qCDebug(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
+    }
+    return result;
 }
 
 QString WiFiSupplicantTool::p2p_connect(const QString &address,
@@ -510,7 +556,13 @@ QString WiFiSupplicantTool::p2p_connect(const QString &address,
     if(!option.isEmpty()) {
         command += QString(tr(" %1")).arg(option);
     }
-    return d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+    QString result = d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+    if(result.startsWith(QStringLiteral("FAIL"))) {
+        qCCritical(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
+    }else{
+        qCDebug(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
+    }
+    return result;
 }
 
 QString WiFiSupplicantTool::p2p_listen(int duration) const
@@ -520,7 +572,13 @@ QString WiFiSupplicantTool::p2p_listen(int duration) const
     if(duration > 0) {
         command += QString(tr(" %1")).arg(duration);
     }
-    return d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+    QString result = d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+    if(result.startsWith(QStringLiteral("FAIL"))) {
+        qCCritical(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
+    }else{
+        qCDebug(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
+    }
+    return result;
 }
 
 QString WiFiSupplicantTool::p2p_group_add(int persistent, int freq) const
@@ -533,7 +591,13 @@ QString WiFiSupplicantTool::p2p_group_add(int persistent, int freq) const
     if(freq > 0) {
         command += QString(tr(" freq=%1")).arg(freq);
     }
-    return d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+    QString result = d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+    if(result.startsWith(QStringLiteral("FAIL"))) {
+        qCCritical(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
+    }else{
+        qCDebug(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
+    }
+    return result;
 }
 
 QString WiFiSupplicantTool::p2p_group_remove(const QString &ifname) const
@@ -541,21 +605,39 @@ QString WiFiSupplicantTool::p2p_group_remove(const QString &ifname) const
     Q_D(const WiFiSupplicantTool);
     QString command = QStringLiteral("P2P_GROUP_REMOVE %1");
     command = command.arg(ifname);
-    return d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+    QString result = d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+    if(result.startsWith(QStringLiteral("FAIL"))) {
+        qCCritical(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
+    }else{
+        qCDebug(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
+    }
+    return result;
 }
 
 QString WiFiSupplicantTool::p2p_peer() const
 {
     Q_D(const WiFiSupplicantTool);
     QString command = QStringLiteral("P2P_PEER");
-    return d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+    QString result = d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+    if(result.startsWith(QStringLiteral("FAIL"))) {
+        qCCritical(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
+    }else{
+        qCDebug(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
+    }
+    return result;
 }
 
 QString WiFiSupplicantTool::p2p_peers() const
 {
     Q_D(const WiFiSupplicantTool);
     QString command = QStringLiteral("P2P_PEERS");
-    return d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+    QString result = d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+    if(result.startsWith(QStringLiteral("FAIL"))) {
+        qCCritical(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
+    }else{
+        qCDebug(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
+    }
+    return result;
 }
 
 QString WiFiSupplicantTool::p2p_invite(int persistent,
@@ -567,7 +649,13 @@ QString WiFiSupplicantTool::p2p_invite(int persistent,
     if(!peer.isEmpty()) {
         command += QString(tr(" peer=%1")).arg(peer);
     }
-    return d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+    QString result = d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+    if(result.startsWith(QStringLiteral("FAIL"))) {
+        qCCritical(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
+    }else{
+        qCDebug(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
+    }
+    return result;
 }
 
 QString WiFiSupplicantTool::p2p_invite(const QString &group,
@@ -579,14 +667,26 @@ QString WiFiSupplicantTool::p2p_invite(const QString &group,
     if(!peer.isEmpty()) {
         command += QString(tr(" peer=%1")).arg(peer);
     }
-    return d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+    QString result = d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+    if(result.startsWith(QStringLiteral("FAIL"))) {
+        qCCritical(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
+    }else{
+        qCDebug(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
+    }
+    return result;
 }
 
 QString WiFiSupplicantTool::p2p_reject() const
 {
     Q_D(const WiFiSupplicantTool);
     QString command = QStringLiteral("P2P_REJECT");
-    return d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+    QString result = d->wpaCtrlRequest(command); // "OK\n" or "FAIL\n"
+    if(result.startsWith(QStringLiteral("FAIL"))) {
+        qCCritical(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
+    }else{
+        qCDebug(logWPA, "[ DEBUG ] %s -> %s", qUtf8Printable(command), qUtf8Printable(result.trimmed()));
+    }
+    return result;
 }
 
 void WiFiSupplicantTool::dhcpc_request()

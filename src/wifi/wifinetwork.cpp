@@ -168,7 +168,7 @@ bool WiFiNetwork::operator==(const WiFiNetwork &other) const
 {
     Q_D(const WiFiNetwork);
 
-    return d->networkId == other.d_func()->networkId;
+    return d->ssid == other.d_func()->ssid;
 }
 
 /*!
