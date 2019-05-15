@@ -19,8 +19,7 @@
 #ifndef WIFISUPPLICANTTOOL_P_H
 #define WIFISUPPLICANTTOOL_P_H
 
-#include <QtCore/qobject.h>
-#include <QtCore/qloggingcategory.h>
+#include <WiFi/wifiglobal.h>
 
 #include <private/qobject_p.h>
 #include <QtCore/qtimer.h>
@@ -29,6 +28,7 @@
 
 // in a header
 Q_DECLARE_LOGGING_CATEGORY(logWPA)
+Q_DECLARE_LOGGING_CATEGORY(logWPASupp)
 
 QT_BEGIN_NAMESPACE
 
@@ -279,6 +279,8 @@ private:
 private:
     Q_DECLARE_PRIVATE(WiFiSupplicantTool)
 
+    Q_PRIVATE_SLOT(d_func(), void _q_printSupplicantOutput())
+    Q_PRIVATE_SLOT(d_func(), void _q_printSupplicantError())
     Q_PRIVATE_SLOT(d_func(), void _q_startSupplicantDone())
     Q_PRIVATE_SLOT(d_func(), void _q_stopSupplicantDone(int, QProcess::ExitStatus))
     Q_PRIVATE_SLOT(d_func(), void _q_supplicantCrashed(QProcess::ProcessError))
@@ -294,6 +296,8 @@ public:
 
     void startSupplicant();
     void stopSupplicant();
+    void _q_printSupplicantOutput();
+    void _q_printSupplicantError();
     void _q_startSupplicantDone();
     void _q_stopSupplicantDone(int exitCode, QProcess::ExitStatus exitStatus);
     void _q_supplicantCrashed(QProcess::ProcessError error);
@@ -307,6 +311,7 @@ public:
     QString wpaCtrlRequest(const QString &command) const;
 
     QTimer *m_tryOpenTimer = NULL;
+    int m_tryOpenTimes = 0;
     QProcess *m_wpaProcess = NULL;
     QSocketNotifier *m_wpaMonitor = NULL;
 

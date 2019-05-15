@@ -58,4 +58,16 @@ private:
 #  define wifiTrace(category) QT_NO_QDEBUG_MACRO()
 #endif
 
+inline QString wifiStringTimes(int times) {
+    if(times < 1000) {
+        QString format = QStringLiteral("[times: %1 ms]");
+        return format.arg(times);
+    }else{
+        QString format = QStringLiteral("[times: %1 s]");
+        return format.arg(times / 1000.0);
+    }
+}
+
+#define wifiPrintTimes(times) qUtf8Printable(wifiStringTimes(times))
+
 #endif // WIFIGLOBAL_H

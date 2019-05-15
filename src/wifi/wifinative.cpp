@@ -24,7 +24,7 @@
 // in a header
 Q_DECLARE_LOGGING_CATEGORY(logNat)
 // in one source file
-Q_LOGGING_CATEGORY(logNat, "wifi.native")
+Q_LOGGING_CATEGORY(logNat, "wifi.native", QtInfoMsg)
 
 static int WIFI_NATIVE_NETWORK_CONNECT_TIMEOUT = 8; // seconds
 
@@ -71,10 +71,10 @@ void WiFiNativePrivate::_q_updateInfoTimeout()
     }
 
     if(!m_info.ipAddress().isEmpty() && m_info.networkId() >= 0 && ipChanged) {
-        qCInfo(logNat, "[ OK ] Network(%d:%s) connected and get ip(%s).[times: %d ms]"
+        qCInfo(logNat, "[ OK ] Network(%d:%s) connected with IP(%s).%s"
                , m_info.networkId(), qUtf8Printable(m_info.ssid())
                , qUtf8Printable(m_info.ipAddress())
-               , (timer_ConnNet->interval() - timer_ConnNet->remainingTime()));
+               , wifiPrintTimes(timer_ConnNet->interval() - timer_ConnNet->remainingTime()));
         if(m_info.networkId() == timer_ConnNetId) {
             timer_ConnNetId = -1;
             timer_ConnNet->stop();
@@ -131,11 +131,11 @@ void WiFiNativePrivate::_q_connNetTimeout()
     const QString &ssid = getSSIDByNetworkId(networkId);
     bool test = testSSIDofScanResults(ssid);
     if(test) {
-        qCCritical(logNat, "[ NO ] Network(%d:%s) authenticate timeout.[times: %d ms]"
-                   , networkId, qUtf8Printable(ssid), timer_ConnNet->interval());
+        qCWarning(logNat, "[FAIL] Network(%d:%s) authenticate timeout.%s"
+                  , networkId, qUtf8Printable(ssid), wifiPrintTimes(timer_ConnNet->interval()));
     }else{
-        qCCritical(logNat, "[ NO ] Network(%d:%s) authenticate timeout with out scanned.[times: %d ms]"
-                   , networkId, qUtf8Printable(ssid), timer_ConnNet->interval());
+        qCWarning(logNat, "[FAIL] Network(%d:%s) authenticate timeout with out scanned.%s"
+                  , networkId, qUtf8Printable(ssid), wifiPrintTimes(timer_ConnNet->interval()));
     }
     timer_ConnNetId = -1;
     tool->remove_network(networkId);
@@ -205,7 +205,9 @@ void WiFiNativePrivate::onMessageReceived(const QString &msg)
     Q_Q(WiFiNative);
 
     if(msg.startsWith(QStringLiteral(WPA_EVENT_SCAN_RESULTS))) {
-        if(m_isAutoScan) {
+        if(timer_ConnNet->isActive()) {
+            tool->scan();
+        }else if(m_isAutoScan) {
             timer_Scan->start();
         }
     } else if(msg.startsWith(QStringLiteral(WPA_EVENT_BSS_ADDED))) {
@@ -254,11 +256,11 @@ void WiFiNativePrivate::onMessageReceived(const QString &msg)
             }
         }
         if(networkId == timer_ConnNetId) {
-            qCCritical(logNat,
-                       "[ NO ] Network(%d:%s) authenticate failed.[times: %d ms]\n%s"
-                       , networkId, qUtf8Printable(ssid)
-                       , (timer_ConnNet->interval() - timer_ConnNet->remainingTime())
-                       , qUtf8Printable(msg));
+            qCWarning(logNat,
+                      "[FAIL] Network(%d:%s) authenticate failed.%s\n%s"
+                      , networkId, qUtf8Printable(ssid)
+                      , wifiPrintTimes(timer_ConnNet->interval() - timer_ConnNet->remainingTime())
+                      , qUtf8Printable(msg));
             timer_ConnNetId = -1;
             timer_ConnNet->stop();
             tool->remove_network(networkId);
@@ -281,9 +283,9 @@ void WiFiNativePrivate::onMessageReceived(const QString &msg)
 
         const QString &ssid = getSSIDByNetworkId(networkId);
         if(timer_ConnNet->isActive()) {
-            qCInfo(logNat, "[ OK ] Network(%d:%s) authenticated.[times: %d ms]"
+            qCInfo(logNat, "[ OK ] Network(%d:%s) authenticated.%s"
                    , networkId, qUtf8Printable(ssid)
-                   , (timer_ConnNet->interval() - timer_ConnNet->remainingTime()));
+                   , wifiPrintTimes(timer_ConnNet->interval() - timer_ConnNet->remainingTime()));
         } else {
             qCInfo(logNat, "[ OK ] Network(%d:%s) authenticated.[ auto ]"
                    , networkId, qUtf8Printable(ssid));
@@ -410,7 +412,7 @@ int WiFiNativePrivate::editNetwork(const WiFiNetwork &network)
 
     QString result = tool->enable_network(id);
     if(!result.startsWith(QStringLiteral("OK"))) {
-        qCCritical(logNat, "[ NO ] Network(%d:%s) enable failed.\n%s"
+        qCCritical(logNat, "[FAIL] Network(%d:%s) enable failed.\n%s"
                    , id, qUtf8Printable(network.ssid()), qUtf8Printable(result));
     }
 
