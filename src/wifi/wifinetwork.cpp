@@ -29,7 +29,6 @@ class WiFiNetworkPrivate
 public:
     WiFiNetworkPrivate();
 
-    bool valid;
     bool cached;
 
     int networkId;
@@ -41,7 +40,6 @@ public:
 };
 
 WiFiNetworkPrivate::WiFiNetworkPrivate() :
-    valid(false),
     cached(false),
     networkId(-1),
     authFlags(WiFi::NoneOpen),
@@ -77,7 +75,6 @@ WiFiNetwork::WiFiNetwork(const QString &ssid) :
     Q_D(WiFiNetwork);
 
     d->ssid = ssid;
-    d->valid = false;
     d->cached = false;
 }
 
@@ -91,9 +88,6 @@ WiFiNetwork::WiFiNetwork(int id, const QString &ssid) :
 
     d->networkId = id;
     d->ssid = ssid;
-    if(d->networkId >= 0) {
-        d->valid = true;
-    }
     d->cached = false;
 }
 
@@ -120,7 +114,7 @@ WiFiNetwork::~WiFiNetwork()
 bool WiFiNetwork::isValid() const
 {
     Q_D(const WiFiNetwork);
-    return d->valid;
+    return d->networkId >= 0;
 }
 
 /*!
@@ -151,10 +145,11 @@ WiFiNetwork &WiFiNetwork::operator=(const WiFiNetwork &other)
 
     d->networkId = other.d_func()->networkId;
     d->ssid = other.d_func()->ssid;
-    d->valid = other.d_func()->valid;
+    d->bssid = other.d_func()->bssid;
     d->cached = other.d_func()->cached;
     d->authFlags = other.d_func()->authFlags;
     d->encrFlags = other.d_func()->encrFlags;
+    d->preSharedKey = other.d_func()->preSharedKey;
 
     return *this;
 }
@@ -168,7 +163,7 @@ bool WiFiNetwork::operator==(const WiFiNetwork &other) const
 {
     Q_D(const WiFiNetwork);
 
-    return d->ssid == other.d_func()->ssid;
+    return d->networkId == other.d_func()->networkId;
 }
 
 /*!

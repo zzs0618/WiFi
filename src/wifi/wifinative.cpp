@@ -60,6 +60,19 @@ void WiFiNativePrivate::syncWiFiNetworks()
 
     WiFiNetworkList list = parser.fromListNetworks(tool->list_networks());
     m_networks.clear();
+    WiFiNetwork wlan(m_info.networkId(), m_info.ssid());
+    if(wlan.isValid()) {
+        wlan.setBSSID(m_info.bssid());
+        int id = wlan.networkId();
+        QString proto = tool->get_network(id, QStringLiteral("proto"));
+        QString key_mgmt = tool->get_network(id, QStringLiteral("key_mgmt"));
+        QString pairwise = tool->get_network(id, QStringLiteral("pairwise"));
+        QString psk = tool->get_network(id, QStringLiteral("psk"));
+        wlan.setPreSharedKey(psk);
+        wlan.setAuthFlags(parser.fromProtoKeyMgmt(proto, key_mgmt));
+        wlan.setEncrFlags(parser.fromPairwise(pairwise));
+        m_networks << wlan;
+    }
     for(int i = 0; i < list.length(); ++i) {
         WiFiNetwork network = list.at(i);
         int id = network.networkId();
@@ -74,13 +87,10 @@ void WiFiNativePrivate::syncWiFiNetworks()
         network.setAuthFlags(parser.fromProtoKeyMgmt(proto, key_mgmt));
         network.setEncrFlags(parser.fromPairwise(pairwise));
 
-        m_networks << network;
+        if(!m_networks.contains(network)) {
+            m_networks << network;
+        }
 
-    }
-    WiFiNetwork network(m_info.networkId(), m_info.ssid());
-    if(network.isValid() && !m_networks.contains(network)) {
-        network.setBSSID(m_info.bssid());
-        m_networks << network;
     }
     Q_EMIT q->networksChanged();
 }
@@ -114,6 +124,7 @@ void WiFiNativePrivate::_q_updateInfoTimeout()
 
     for(int i = 0; i < m_scanResults.length(); ++i) {
         int id = getNetworkByScanResult(m_scanResults[i]).networkId();
+
         if(m_scanResults[i].networkId() != id) {
             qCDebug(logNat, "[ DEBUG ] Update ScanResult NetworkId (%s = %d) ",
                     qUtf8Printable(m_scanResults[i].ssid()), id);
@@ -354,8 +365,8 @@ void WiFiNativePrivate::onMessageReceived(const QString &msg)
 
 bool WiFiNativePrivate::compare(const WiFiScanResult &scanResult, const WiFiNetwork &network) const
 {
-    if(!network.bssid().isNull() && network.bssid() == scanResult.bssid()) {
-        return true;
+    if(!network.bssid().isNull()) {
+        return network.bssid() == scanResult.bssid();
     }else if(network.ssid() == scanResult.ssid()) {
         return true;
     }
