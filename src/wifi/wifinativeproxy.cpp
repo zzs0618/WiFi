@@ -39,6 +39,7 @@ public:
 
     void onServiceRegistered(const QString &service);
     void onServiceUnregistered(const QString &service);
+    void processEnabled(bool enabled);
     void processServiced(bool serviced);
 
 public:
@@ -109,10 +110,7 @@ void WiFiNativeProxyPrivate::onWifiStateChanged(bool enabled)
 {
     Q_Q(WiFiNativeProxy);
 
-    if(m_isEnabled != enabled) {
-        m_isEnabled = enabled;
-        Q_EMIT q->isWiFiEnabledChanged();
-    }
+    processEnabled(enabled);
 }
 
 void WiFiNativeProxyPrivate::onWiFiAutoScanChanged(bool autoScan)
@@ -130,13 +128,47 @@ void WiFiNativeProxyPrivate::onServiceRegistered(const QString &service)
 {
     qDebug() << Q_FUNC_INFO << service;
     processServiced(true);
-    //    q->setWiFiEnabled(true);
 }
 
 void WiFiNativeProxyPrivate::onServiceUnregistered(const QString &service)
 {
     qDebug() << Q_FUNC_INFO << service;
     processServiced(false);
+}
+
+void WiFiNativeProxyPrivate::processEnabled(bool enabled)
+{
+    Q_Q(WiFiNativeProxy);
+
+    if(m_isEnabled == enabled) {
+        return;
+    }
+    m_isEnabled = enabled;
+    Q_EMIT q->isWiFiEnabledChanged();
+
+    if(m_isEnabled) {
+        q->initialize();
+
+        m_isAutoScan = m_station->isWiFiAutoScan();
+        Q_EMIT q->isWiFiAutoScanChanged();
+        m_info = WiFiInfo::fromJson(m_station->connectionInfo().toUtf8());
+        Q_EMIT q->connectionInfoChanged();
+        m_scanResults = WiFiScanResultList::fromJson(m_station->scanResults().toUtf8());
+        Q_EMIT q->scanResultsChanged();
+        m_networks = WiFiNetworkList::fromJson(m_station->networks().toUtf8());
+        Q_EMIT q->networksChanged();
+    }else{
+        q->uninitialize();
+
+        m_isAutoScan = false;
+        Q_EMIT q->isWiFiAutoScanChanged();
+        m_info = WiFiInfo();
+        Q_EMIT q->connectionInfoChanged();
+        m_scanResults = WiFiScanResultList();
+        Q_EMIT q->scanResultsChanged();
+        m_networks = WiFiNetworkList();
+        Q_EMIT q->networksChanged();
+    }
 }
 
 void WiFiNativeProxyPrivate::processServiced(bool serviced)
@@ -150,26 +182,9 @@ void WiFiNativeProxyPrivate::processServiced(bool serviced)
     emit q->isWiFiServicedChanged();
 
     if(m_isServiced) {
-        m_isEnabled = m_station->isWiFiEnabled();
-        Q_EMIT q->isWiFiEnabledChanged();
-        m_isAutoScan = m_station->isWiFiAutoScan();
-        Q_EMIT q->isWiFiAutoScanChanged();
-        m_info = WiFiInfo::fromJson(m_station->connectionInfo().toUtf8());
-        Q_EMIT q->connectionInfoChanged();
-        m_scanResults = WiFiScanResultList::fromJson(m_station->scanResults().toUtf8());
-        Q_EMIT q->scanResultsChanged();
-        m_networks = WiFiNetworkList::fromJson(m_station->networks().toUtf8());
-        Q_EMIT q->networksChanged();
+        processEnabled(m_station->isWiFiEnabled());
     } else {
-        q->setWiFiEnabled(false);
-        m_isAutoScan = false;
-        Q_EMIT q->isWiFiAutoScanChanged();
-        m_info = WiFiInfo();
-        Q_EMIT q->connectionInfoChanged();
-        m_scanResults = WiFiScanResultList();
-        Q_EMIT q->scanResultsChanged();
-        m_networks = WiFiNetworkList();
-        Q_EMIT q->networksChanged();
+        processEnabled(false);
     }
 }
 
@@ -180,32 +195,10 @@ WiFiNativeProxy::WiFiNativeProxy(QObject *parent)
 
     d->m_station = new wifi::native::Station(WiFiDBus::serviceName,
             WiFiDBus::stationPath, WiFiDBus::connection());
-    QObjectPrivate::connect(d->m_station,
-                            &WifiNativeStationInterface::ConnectionInfoChanged,
-                            d, &WiFiNativeProxyPrivate::onConnectionInfoChanged);
-    connect(d->m_station, SIGNAL(NetworkAuthenticated(int)),
-            SIGNAL(networkAuthenticated(int)));
-    connect(d->m_station, SIGNAL(NetworkConnecting(int)),
-            SIGNAL(networkConnecting(int)));
-    connect(d->m_station, SIGNAL(NetworkConnected(int)),
-            SIGNAL(networkConnected(int)));
-    connect(d->m_station, SIGNAL(NetworkErrorOccurred(int)),
-            SIGNAL(networkErrorOccurred(int)));
-    QObjectPrivate::connect(d->m_station,
-                            &WifiNativeStationInterface::ScanResultFound,
-                            d, &WiFiNativeProxyPrivate::onScanResultFound);
-    QObjectPrivate::connect(d->m_station,
-                            &WifiNativeStationInterface::ScanResultLost,
-                            d, &WiFiNativeProxyPrivate::onScanResultLost);
-    QObjectPrivate::connect(d->m_station,
-                            &WifiNativeStationInterface::ScanResultUpdated,
-                            d, &WiFiNativeProxyPrivate::onScanResultUpdated);
+
     QObjectPrivate::connect(d->m_station,
                             &WifiNativeStationInterface::WifiStateChanged,
                             d, &WiFiNativeProxyPrivate::onWifiStateChanged);
-    QObjectPrivate::connect(d->m_station,
-                            &WifiNativeStationInterface::WiFiAutoScanChanged,
-                            d, &WiFiNativeProxyPrivate::onWiFiAutoScanChanged);
 
     QDBusServiceWatcher *wather = new QDBusServiceWatcher(WiFiDBus::serviceName,
             WiFiDBus::connection(), QDBusServiceWatcher::WatchForOwnerChange, this);
@@ -218,6 +211,60 @@ WiFiNativeProxy::WiFiNativeProxy(QObject *parent)
                     WiFiDBus::connection().interface()->isServiceRegistered(
                                     WiFiDBus::serviceName);
     d->processServiced(reply.value());
+}
+
+void WiFiNativeProxy::initialize()
+{
+    Q_D(WiFiNativeProxy);
+
+    QObjectPrivate::connect(d->m_station,
+                            &WifiNativeStationInterface::ConnectionInfoChanged,
+                            d, &WiFiNativeProxyPrivate::onConnectionInfoChanged);
+    connect(d->m_station, SIGNAL(NetworkAuthenticated(int)),
+            this, SIGNAL(networkAuthenticated(int)));
+    connect(d->m_station, SIGNAL(NetworkConnecting(int)),
+            this, SIGNAL(networkConnecting(int)));
+    connect(d->m_station, SIGNAL(NetworkConnected(int)),
+            this, SIGNAL(networkConnected(int)));
+    connect(d->m_station, SIGNAL(NetworkErrorOccurred(int)),
+            this, SIGNAL(networkErrorOccurred(int)));
+    QObjectPrivate::connect(d->m_station,
+                            &WifiNativeStationInterface::ScanResultFound,
+                            d, &WiFiNativeProxyPrivate::onScanResultFound);
+    QObjectPrivate::connect(d->m_station,
+                            &WifiNativeStationInterface::ScanResultLost,
+                            d, &WiFiNativeProxyPrivate::onScanResultLost);
+    QObjectPrivate::connect(d->m_station,
+                            &WifiNativeStationInterface::ScanResultUpdated,
+                            d, &WiFiNativeProxyPrivate::onScanResultUpdated);
+    QObjectPrivate::connect(d->m_station,
+                            &WifiNativeStationInterface::WiFiAutoScanChanged,
+                            d, &WiFiNativeProxyPrivate::onWiFiAutoScanChanged);
+}
+
+void WiFiNativeProxy::uninitialize()
+{
+    Q_D(WiFiNativeProxy);
+
+    QObjectPrivate::disconnect(d->m_station,
+                               &WifiNativeStationInterface::ConnectionInfoChanged,
+                               d, &WiFiNativeProxyPrivate::onConnectionInfoChanged);
+    disconnect(d->m_station, SIGNAL(NetworkAuthenticated(int)), 0, 0);
+    disconnect(d->m_station, SIGNAL(NetworkConnecting(int)), 0, 0);
+    disconnect(d->m_station, SIGNAL(NetworkConnected(int)), 0, 0);
+    disconnect(d->m_station, SIGNAL(NetworkErrorOccurred(int)), 0, 0);
+    QObjectPrivate::disconnect(d->m_station,
+                               &WifiNativeStationInterface::ScanResultFound,
+                               d, &WiFiNativeProxyPrivate::onScanResultFound);
+    QObjectPrivate::disconnect(d->m_station,
+                               &WifiNativeStationInterface::ScanResultLost,
+                               d, &WiFiNativeProxyPrivate::onScanResultLost);
+    QObjectPrivate::disconnect(d->m_station,
+                               &WifiNativeStationInterface::ScanResultUpdated,
+                               d, &WiFiNativeProxyPrivate::onScanResultUpdated);
+    QObjectPrivate::disconnect(d->m_station,
+                               &WifiNativeStationInterface::WiFiAutoScanChanged,
+                               d, &WiFiNativeProxyPrivate::onWiFiAutoScanChanged);
 }
 
 bool WiFiNativeProxy::isWiFiServiced() const
@@ -240,12 +287,11 @@ void WiFiNativeProxy::setWiFiEnabled(bool enabled)
         return;
     }
 
+    d->processEnabled(enabled);
+
     if(d->m_isServiced) {
         d->m_station->SetWiFiEnabled(enabled);
     }
-
-    //    d->m_isEnabled = enabled;
-    //    emit isWiFiEnabledChanged();
 }
 
 bool WiFiNativeProxy::isWiFiAutoScan() const

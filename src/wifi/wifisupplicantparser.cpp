@@ -153,6 +153,18 @@ const
     return list;
 }
 
+QStringList WiFiSupplicantParser::fromScanResult(const QString &scan_results) const
+{
+    QStringList list;
+    QStringList items = scan_results.split(QRegExp(QStringLiteral("\\n"))).mid(1);
+    for (int i = 0; i < items.size(); i++) {
+        QStringList net = items.at(i).split(QRegExp(QStringLiteral("\\t")));
+        if(net.length() > 1) {
+            list << net.at(0);
+        }
+    }
+    return list;
+}
 
 WiFi::AuthFlags WiFiSupplicantParser::fromProtoKeyMgmt(const QString &proto,
         const QString &key_mgmt) const

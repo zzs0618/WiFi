@@ -43,6 +43,8 @@ public:
 
     WiFiNetworkList fromListNetworks(const QString &networks) const;
 
+    QStringList fromScanResult(const QString &scan_results) const;
+
     WiFi::AuthFlags fromProtoKeyMgmt(const QString &proto,
                                      const QString &key_mgmt) const;
 

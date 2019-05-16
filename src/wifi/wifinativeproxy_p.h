@@ -63,6 +63,10 @@ signals:
     void networkConnected(int networkId);
     void networkErrorOccurred(int networkId);
 
+protected:
+    void initialize();
+    void uninitialize();
+
 private:
     Q_DECLARE_PRIVATE(WiFiNativeProxy)
 };

@@ -34,6 +34,9 @@ public:
     WiFiNativePrivate();
     ~WiFiNativePrivate();
 
+    void initWiFiNativeInfo();
+    void syncWiFiNetworks();
+
     void onSupplicantStarted();
     void onSupplicantFinished();
     void onMessageReceived(const QString &msg);
@@ -42,8 +45,10 @@ public:
     void _q_autoScanTimeout();
     void _q_connNetTimeout();
 
-    QString getSSIDByNetworkId(int networkId) const;
-    bool testSSIDofScanResults(const QString &ssid);
+    bool compare(const WiFiScanResult &scanResult, const WiFiNetwork &network) const;
+    WiFiNetwork getNetworkById(int id) const;
+    WiFiScanResult getScanResultByNetwork(const WiFiNetwork &network) const;
+    WiFiNetwork getNetworkByScanResult(const WiFiScanResult &scanResult) const;
 
     int addNetwork(const WiFiNetwork &network);
     int editNetwork(const WiFiNetwork &network);
@@ -62,7 +67,6 @@ public:
     WiFiInfo m_info;
     WiFiScanResultList m_scanResults;
     WiFiNetworkList m_networks;
-    QMap<QString, int> m_netIdMapping;
 };
 
 #endif // WIFINATIVE_P_H
