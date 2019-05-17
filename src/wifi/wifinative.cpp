@@ -26,7 +26,7 @@ Q_DECLARE_LOGGING_CATEGORY(logNat)
 // in one source file
 Q_LOGGING_CATEGORY(logNat, "wifi.native", QtInfoMsg)
 
-static int WIFI_NATIVE_NETWORK_CONNECT_TIMEOUT = 8; // seconds
+static int WIFI_NATIVE_NETWORK_CONNECT_TIMEOUT = 25; // seconds
 
 /*!
     \class WiFiNative
@@ -166,7 +166,7 @@ void WiFiNativePrivate::onSupplicantStarted()
     if(!timer_Scan) {
         timer_Scan = new QTimer(q);
         timer_Scan->setSingleShot(true);
-        timer_Scan->setInterval(1000);
+        timer_Scan->setInterval(500);
         timer_Scan->connect(timer_Scan, SIGNAL(timeout()), q,
                             SLOT(_q_autoScanTimeout()));
     }
@@ -261,9 +261,7 @@ void WiFiNativePrivate::onMessageReceived(const QString &msg)
     Q_Q(WiFiNative);
 
     if(msg.startsWith(QStringLiteral(WPA_EVENT_SCAN_RESULTS))) {
-        if(timer_ConnNet->isActive()) {
-            tool->scan();
-        }else if(m_isAutoScan) {
+        if(m_isAutoScan) {
             timer_Scan->start();
         }
     } else if(q->isWiFiEnabled() && msg.startsWith(QStringLiteral(WPA_EVENT_BSS_ADDED))) {
