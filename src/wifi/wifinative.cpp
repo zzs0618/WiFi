@@ -26,7 +26,7 @@ Q_DECLARE_LOGGING_CATEGORY(logNat)
 // in one source file
 Q_LOGGING_CATEGORY(logNat, "wifi.native", QtInfoMsg)
 
-static int WIFI_NATIVE_NETWORK_CONNECT_TIMEOUT = 25; // seconds
+static int WIFI_NATIVE_NETWORK_TIMEOUT = 25; // seconds
 
 /*!
     \class WiFiNative
@@ -41,11 +41,11 @@ WiFiNativePrivate::WiFiNativePrivate()
     : QObjectPrivate()
     , tool(WiFiSupplicantTool::instance())
 {
-    if(!qEnvironmentVariableIsEmpty("WIFI_NATIVE_NETWORK_CONNECT_TIMEOUT")) {
+    if(!qEnvironmentVariableIsEmpty("WIFI_NATIVE_NETWORK_TIMEOUT")) {
         bool ok;
-        int timeout = qgetenv("WIFI_NATIVE_NETWORK_CONNECT_TIMEOUT").toInt(&ok);
+        int timeout = qgetenv("WIFI_NATIVE_NETWORK_TIMEOUT").toInt(&ok);
         if(ok) {
-            WIFI_NATIVE_NETWORK_CONNECT_TIMEOUT = timeout;
+            WIFI_NATIVE_NETWORK_TIMEOUT = timeout;
         }
     }
 }
@@ -174,7 +174,7 @@ void WiFiNativePrivate::onSupplicantStarted()
     if(!timer_ConnNet) {
         timer_ConnNet = new QTimer(q);
         timer_ConnNet->setSingleShot(true);
-        timer_ConnNet->setInterval(WIFI_NATIVE_NETWORK_CONNECT_TIMEOUT * 1000);
+        timer_ConnNet->setInterval(WIFI_NATIVE_NETWORK_TIMEOUT * 1000);
         timer_ConnNet->connect(timer_ConnNet, SIGNAL(timeout()), q,
                                SLOT(_q_connNetTimeout()));
     }
