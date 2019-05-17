@@ -25,15 +25,86 @@ QQuickWiFiScanResultModel::QQuickWiFiScanResultModel(QObject *parent)
     , m_manager(new WiFiManager(this))
     , m_complete(false)
 {
+    connect(m_manager, &WiFiManager::scanResultFound, [this](const WiFiScanResult &result) {
+        int i = m_scanResults.size();
+        this->beginInsertRows(QModelIndex(), i, i);
+        m_scanResults << result;
+        this->endInsertRows();
+    });
+    connect(m_manager, &WiFiManager::scanResultUpdated, [this](const WiFiScanResult &result) {
+        int i = m_scanResults.indexOf(result);
+        m_scanResults.replace(i, result);
+        this->dataChanged(index(i), index(i));
+    });
+    connect(m_manager, &WiFiManager::scanResultLost, [this](const WiFiScanResult &result) {
+        int i = m_scanResults.indexOf(result);
+        if(i > -1) {
+            this->beginRemoveRows(QModelIndex(), i, i);
+            m_scanResults.removeAt(i);
+            this->endRemoveRows();
+        }
+    });
     connect(m_manager, &WiFiManager::scanResultsChanged, [this]() {
         this->beginResetModel();
+        m_scanResults =  m_manager->scanResults();
         this->endResetModel();
     });
+
+    connect(m_manager, SIGNAL(networkConnecting(int)),
+            SLOT(onNetworkConnecting(int)));
+    connect(m_manager, SIGNAL(networkAuthenticated(int)),
+           SLOT(onNetworkAuthenticated(int)));
+    connect(m_manager, SIGNAL(networkConnected(int)),
+            SLOT(onNetworkConnected(int)));
+    connect(m_manager, SIGNAL(networkErrorOccurred(int)),
+            SLOT(onNetworkErrorOccurred(int)));
+
+    m_scanResults =  m_manager->scanResults();
+}
+
+void QQuickWiFiScanResultModel::onNetworkConnecting(int networkId)
+{
+    m_status = qMakePair(networkId, 1);
+    for(int i = 0; i < m_scanResults.size(); ++i) {
+        if(m_scanResults[i].networkId() == networkId) {
+            this->dataChanged(index(i), index(i));
+        }
+    }
+}
+
+void QQuickWiFiScanResultModel::onNetworkAuthenticated(int networkId)
+{
+    m_status = qMakePair(networkId, 2);
+    for(int i = 0; i < m_scanResults.size(); ++i) {
+        if(m_scanResults[i].networkId() == networkId) {
+            this->dataChanged(index(i), index(i));
+        }
+    }
+}
+
+void QQuickWiFiScanResultModel::onNetworkConnected(int networkId)
+{
+    m_status = qMakePair(networkId, 3);
+    for(int i = 0; i < m_scanResults.size(); ++i) {
+        if(m_scanResults[i].networkId() == networkId) {
+            this->dataChanged(index(i), index(i));
+        }
+    }
+}
+
+void QQuickWiFiScanResultModel::onNetworkErrorOccurred(int networkId)
+{
+    m_status = qMakePair(networkId, 4);
+    for(int i = 0; i < m_scanResults.size(); ++i) {
+        if(m_scanResults[i].networkId() == networkId) {
+            this->dataChanged(index(i), index(i));
+        }
+    }
 }
 
 int QQuickWiFiScanResultModel::rowCount(const QModelIndex &) const
 {
-    return m_manager->scanResults().count();
+    return m_scanResults.count();
 }
 
 QVariant QQuickWiFiScanResultModel::data(const QModelIndex &index,
@@ -43,22 +114,23 @@ QVariant QQuickWiFiScanResultModel::data(const QModelIndex &index,
         return QVariant();
     }
 
-    if (index.row() >= m_manager->scanResults().count()) {
+    if (index.row() >= m_scanResults.count()) {
         qWarning() << "WifiAccessPointModel: Index out of bound";
         return QVariant();
     }
 
-    QVariantMap scanResult = m_manager->scanResults().value(index.row()).toMap();
+    const WiFiScanResult &scanResult = m_scanResults.value(index.row());
+    QVariantMap scanResultMap = scanResult.toMap();
     QVariant value;
     switch (role) {
         case Qt::DisplayRole + 7: {
-            int rssi = scanResult["rssi"].toInt();
+            int rssi = scanResultMap["rssi"].toInt();
             value = WiFiManager::CalculateSignalLevel(rssi, 4);
         }
         break;
         case Qt::DisplayRole + 8: {
-            WiFiMacAddress bssid = WiFiMacAddress(scanResult["bssid"].toString());
-            int networkId = scanResult["networkId"].toInt();
+            WiFiMacAddress bssid = scanResult.bssid();
+            int networkId = scanResult.networkId();
             if(m_manager->connectionInfo().bssid() == bssid) {
                 value = 2;
             } else {
@@ -66,8 +138,16 @@ QVariant QQuickWiFiScanResultModel::data(const QModelIndex &index,
             }
         }
         break;
+        case Qt::DisplayRole + 9: {
+            if(scanResult.networkId() == m_status.first) {
+                value = m_status.second;
+            }else{
+                value = 0;
+            }
+        }
+        break;
         default:
-            value = scanResult.value(roleNames().value(role));
+            value = scanResultMap.value(roleNames().value(role));
             break;
     }
     return value;
@@ -83,7 +163,8 @@ QHash<int, QByteArray> QQuickWiFiScanResultModel::roleNames() const
         {Qt::DisplayRole + 5, "flags"},
         {Qt::DisplayRole + 6, "networkId"},
         {Qt::DisplayRole + 7, "signalLevel"},
-        {Qt::DisplayRole + 8, "type"}
+        {Qt::DisplayRole + 8, "type"},
+        {Qt::DisplayRole + 9, "status"}
     };
 
     return roles;

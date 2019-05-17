@@ -56,9 +56,8 @@ public:
     int frequency() const;
     QString ipAddress() const;
 
-    Q_INVOKABLE int addNetwork(int networkId, const QString &ssid,
-                               const QString &password);
-    Q_INVOKABLE int addNetwork(const QString &ssid, const QString &password);
+    Q_INVOKABLE int addNetwork(const QString &ssid, const QString &password,
+                               const QString &bssid = QString());
     Q_INVOKABLE void selectNetwork(int networkId);
     Q_INVOKABLE void removeNetwork(int networkId);
 

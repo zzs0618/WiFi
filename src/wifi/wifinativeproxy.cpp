@@ -79,7 +79,7 @@ void WiFiNativeProxyPrivate::onScanResultFound(const QString &bss)
     WiFiScanResult revBSS = WiFiScanResult::fromJson(bss.toUtf8());
     if(!m_scanResults.contains(revBSS)) {
         m_scanResults << revBSS;
-        Q_EMIT q->scanResultsChanged();
+        Q_EMIT q->scanResultFound(revBSS);
     }
 }
 
@@ -90,7 +90,7 @@ void WiFiNativeProxyPrivate::onScanResultLost(const QString &bss)
     WiFiScanResult revBSS = WiFiScanResult::fromJson(bss.toUtf8());
     if(m_scanResults.contains(revBSS)) {
         m_scanResults.removeAll(revBSS);
-        Q_EMIT q->scanResultsChanged();
+        Q_EMIT q->scanResultLost(revBSS);
     }
 }
 
@@ -102,7 +102,7 @@ void WiFiNativeProxyPrivate::onScanResultUpdated(const QString &bss)
     int index = m_scanResults.indexOf(revBSS);
     if(index >= 0 && index < m_scanResults.length()) {
         m_scanResults.replace(index, revBSS);
-        Q_EMIT q->scanResultsChanged();
+        Q_EMIT q->scanResultUpdated(revBSS);
     }
 }
 

@@ -405,6 +405,10 @@ WiFiNetwork WiFiNativePrivate::getNetworkByScanResult(const WiFiScanResult &scan
 
 int WiFiNativePrivate::addNetwork(const WiFiNetwork &network)
 {
+    int idx = m_networks.indexOf(network);
+    if(idx > -1) {
+        return m_networks[idx].networkId();
+    }
     bool ok;
     int id = tool->add_network().toInt(&ok);
     if(ok) {
@@ -426,6 +430,9 @@ int WiFiNativePrivate::editNetwork(const WiFiNetwork &network)
     }
 
     tool->set_network(id, QLatin1String("ssid"), network.ssid());
+    if(!network.bssid().isNull()) {
+        tool->set_network(id, QLatin1String("bssid"), network.bssid().toString());
+    }
 
     WiFi::AuthFlags auth = network.authFlags();
     if(auth.testFlag(WiFi::NoneWEPShared)) {

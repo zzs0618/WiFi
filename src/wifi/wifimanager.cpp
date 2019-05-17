@@ -61,9 +61,11 @@ WiFiManager::WiFiManager(QObject * parent)
             SIGNAL(isWiFiAutoScanChanged()));
     connect(d->m_proxy, SIGNAL(connectionInfoChanged()), this,
             SIGNAL(connectionInfoChanged()));
-    connect(d->m_proxy, SIGNAL(scanResultsChanged()), this,
-            SIGNAL(scanResultsChanged()));
-    connect(d->m_proxy, SIGNAL(networksChanged()), this, SIGNAL(networksChanged()));
+    connect(d->m_proxy, SIGNAL(scanResultFound(WiFiScanResult)), SIGNAL(scanResultFound(WiFiScanResult)));
+    connect(d->m_proxy, SIGNAL(scanResultUpdated(WiFiScanResult)), SIGNAL(scanResultUpdated(WiFiScanResult)));
+    connect(d->m_proxy, SIGNAL(scanResultLost(WiFiScanResult)), SIGNAL(scanResultLost(WiFiScanResult)));
+    connect(d->m_proxy, SIGNAL(scanResultsChanged()), SIGNAL(scanResultsChanged()));
+    connect(d->m_proxy, SIGNAL(networksChanged()), SIGNAL(networksChanged()));
 
     connect(d->m_proxy, SIGNAL(networkAuthenticated(int)), this,
             SIGNAL(networkAuthenticated(int)));

@@ -97,22 +97,18 @@ QString QQuickWiFiManager::ipAddress() const
     return m_ipAddress;
 }
 
-int QQuickWiFiManager::addNetwork(int networkId, const QString &ssid,
-                                  const QString &password)
+int QQuickWiFiManager::addNetwork(const QString &ssid, const QString &password,
+                                  const QString &bssid)
 {
     if(!m_componentCompleted) {
         return -1;
     }
 
-    WiFiNetwork net(networkId, ssid);
+    WiFiNetwork net(-1, ssid);
     net.setAuthFlags(WiFi::WPA2_PSK);
     net.setPreSharedKey(password);
+    net.setBSSID(WiFiMacAddress(bssid));
     return m_manager->addNetwork(net);
-}
-
-int QQuickWiFiManager::addNetwork(const QString &ssid, const QString &password)
-{
-    return this->addNetwork(-1, ssid, password);
 }
 
 void QQuickWiFiManager::selectNetwork(int networkId)

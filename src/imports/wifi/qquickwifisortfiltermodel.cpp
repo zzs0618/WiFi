@@ -124,7 +124,9 @@ QObject *QQuickWiFiSortFilterModel::source() const
 
 void QQuickWiFiSortFilterModel::setSource(QObject *source)
 {
-    setSourceModel(qobject_cast<QAbstractItemModel *>(source));
+    beginResetModel();
+    QSortFilterProxyModel::setSourceModel(qobject_cast<QAbstractItemModel *>(source));
+    endResetModel();
 }
 
 QByteArray QQuickWiFiSortFilterModel::sortRole() const
@@ -294,3 +296,42 @@ bool QQuickWiFiSortFilterModel::lessThan(const QModelIndex &source_left,
     }
     return false;
 }
+
+
+//void QQuickWiFiSortFilterModel::_q_sourceRowsAboutToBeInserted(const QModelIndex &parent, int start, int end)
+//{
+//    Q_ASSERT(parent.isValid() ? parent.model() == sourceModel() : true);
+//    beginInsertRows(mapFromSource(parent), start, end);
+//}
+
+//void QQuickWiFiSortFilterModel::_q_sourceRowsInserted(const QModelIndex &parent, int start, int end)
+//{
+//    Q_ASSERT(parent.isValid() ? parent.model() == sourceModel() : true);
+//    Q_UNUSED(parent)
+//    Q_UNUSED(start)
+//    Q_UNUSED(end)
+//    endInsertRows();
+//}
+
+//void QQuickWiFiSortFilterModel::_q_sourceRowsAboutToBeRemoved(const QModelIndex &parent, int start, int end)
+//{
+//    Q_ASSERT(parent.isValid() ? parent.model() == sourceModel() : true);
+//    beginRemoveRows(mapFromSource(parent), start, end);
+//}
+
+//void QQuickWiFiSortFilterModel::_q_sourceRowsRemoved(const QModelIndex &parent, int start, int end)
+//{
+//    Q_ASSERT(parent.isValid() ? parent.model() == sourceModel() : true);
+//    Q_UNUSED(parent)
+//    Q_UNUSED(start)
+//    Q_UNUSED(end)
+//    endRemoveRows();
+//}
+
+//void QQuickWiFiSortFilterModel::_q_sourceDataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QVector<int> &roles)
+//{
+//    Q_ASSERT(topLeft.isValid() ? topLeft.model() == sourceModel() : true);
+//    Q_ASSERT(bottomRight.isValid() ? bottomRight.model() == sourceModel() : true);
+//    dataChanged(mapFromSource(topLeft), mapFromSource(bottomRight), roles);
+//}
+

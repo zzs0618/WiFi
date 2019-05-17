@@ -59,6 +59,9 @@ signals:
     void isWiFiEnabledChanged();
     void isWiFiAutoScanChanged();
     void connectionInfoChanged();
+    void scanResultFound(const WiFiScanResult &result);
+    void scanResultUpdated(const WiFiScanResult &result);
+    void scanResultLost(const WiFiScanResult &result);
     void scanResultsChanged();
     void networksChanged();
 

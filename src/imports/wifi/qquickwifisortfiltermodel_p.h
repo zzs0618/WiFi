@@ -87,6 +87,13 @@ protected:
     bool lessThan(const QModelIndex &source_left,
                   const QModelIndex &source_right) const Q_DECL_OVERRIDE;
 
+//private slots:
+//    void _q_sourceRowsAboutToBeInserted(const QModelIndex &parent, int start, int end);
+//    void _q_sourceRowsInserted(const QModelIndex &parent, int start, int end);
+//    void _q_sourceRowsAboutToBeRemoved(const QModelIndex &parent, int start, int end);
+//    void _q_sourceRowsRemoved(const QModelIndex &parent, int start, int end);
+//    void _q_sourceDataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QVector<int> &roles);
+
 protected:
     QQuickWiFiSortFilterModelPrivate *d_ptr;
 

@@ -40,9 +40,18 @@ public:
 
     void classBegin();
     void componentComplete();
+
+private slots:
+    void onNetworkConnecting(int networkId);
+    void onNetworkAuthenticated(int networkId);
+    void onNetworkConnected(int networkId);
+    void onNetworkErrorOccurred(int networkId);
+
 private:
     WiFiManager *m_manager = NULL;
+    WiFiScanResultList m_scanResults;
     bool m_complete;
+    QPair<int,int> m_status;
 };
 
 QML_DECLARE_TYPE(QT_PREPEND_NAMESPACE(QQuickWiFiScanResultModel))
